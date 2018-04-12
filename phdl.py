@@ -5,6 +5,7 @@ from ph_models import *
 import random,math,itertools
 from exam_prog_sets import arrange_datas,PREFIX
 from gen_book_tab import gen_book_tbl,count_stud_num
+from gen_examid import gen_pdf
 
 __author__ = "cloveses"
 
@@ -107,8 +108,10 @@ def gen_seg_for_sch():
         datas.append([sch,'-'.join((woman_min,woman_max)),'-'.join((man_min,man_max))])
     save_datas_xlsx('各校男女考生号段.xlsx',datas)
 
-
-
+# 生成所有考生的准考证
+@db_session
+def gen_all_examid():
+    pass
 
 # 检验各校上报体育选项中数据
 def check_files_select(directory,types,grid_end=0,start_row=1):
@@ -203,8 +206,8 @@ def put2studph():
 
 
 if __name__ == '__main__':
-    print('注意：执行时应将字体文件放入当前目录中')
-    print('''执行前期所有数据导入与生成要具备两个条件：
+    print('注意：执行时应将有关字体文件放入当前目录中')
+    print('''执行前所有数据导入与生成要具备两个条件：
         1.有要导入的考生信息表(在 studph 子目录中)，
         2.exam_prog_sets.py 文件中有考试日程安排信息和准考证前缀码
         ''')
@@ -246,6 +249,14 @@ if __name__ == '__main__':
         if exe_flag == 'y':
             datas = count_stud_num()
             save_datas_xlsx('各时间段各考点考生人数.xlsx',datas)
+
+    # print('''
+    #     生成准考证,照片文件子目录为pho：
+    #     ''')
+    # exe_flag = input('启动生成准考证？(y/n)：')
+    # if exe_flag == 'y':
+    #     gen_all_examid()
+
 
     print('''
         要检验的免试表和选项表应分别存放于以下子目录中：
