@@ -7,8 +7,8 @@ from reportlab.lib import colors
 from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.lib.pagesizes import A4
 
-from phdl import *
-from booktab_sets import arrange_datas
+from ph_models import *
+from exam_prog_sets import arrange_datas
 
 # 生成考试异常登记表
 
