@@ -1,4 +1,5 @@
 import os
+import hashlib
 import xlrd
 import xlsxwriter
 from ph_models import *
@@ -39,11 +40,14 @@ def gath_data(tab_obj,ks,directory,grid_end=1,start_row=1,types=None,start_col=0
             # print(datas)
             tab_obj(**datas)
 
-# 为所有考生设定随机数，以打乱报名号
+# 为所有考生设定随机值，以打乱报名号
 @db_session
 def set_rand():
     for s in StudPh.select(): 
-        s.sturand = random.random() * 10000
+        # s.sturand = random.random() * 10000
+        md5_str = ''.join((s.id,s.signid,s.name,s.sex,s.idcode,s.sch,s.schcode))
+        hshb = hashlib.sha3_512(md5_str.encode())
+        s.sturand = hshb.hexdigest()
 
 # 生成考生的准考证号、考试日期、所在考点
 @db_session
