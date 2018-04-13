@@ -39,8 +39,14 @@ class  StudPh(db.Entity):
     schcode = Required(str)
     exam_addr = Optional(str,nullable = True)
     exam_date = Optional(str,nullable = True)
-    # 用于乱序
+    
+    # 用于乱序 2018年使用
     sturand = Optional(float,nullable = True)
+
+    # 2019 年启动字段hashlib_sha3_512 乱序，
+    # 以达到稳定排号(只要导入数据文件相同，多次排号不变)
+    sturand = Optional(str,nullable=True)
+
     # 免考标志
     free_flag = Optional(bool,nullable = True)
     # 选项
@@ -94,6 +100,7 @@ ITEM_SELECT_TYPE = (int,str,str,str,int,int,int,int)
 
 # 导入所有考生信息的字段名、数据类型
 STUDPH_KS = ('signid','name','sex','idcode','sch','schcode')
+STUDPH_TYPE = (str,str,str,str,str,str)
 
 db.bind(**DB_PARAMS)
 db.generate_mapping(create_tables=True)

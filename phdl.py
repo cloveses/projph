@@ -46,7 +46,7 @@ def gath_data(tab_obj,ks,directory,grid_end=1,start_row=1,types=None,start_col=0
 def set_rand():
     for s in StudPh.select(): 
         # s.sturand = random.random() * 10000
-        md5_str = ''.join((s.id,s.signid,s.name,s.sex,s.idcode,s.sch,s.schcode))
+        md5_str = ''.join((str(s.id),s.signid,s.name,s.sex,s.idcode,s.sch,s.schcode))
         hshb = hashlib.sha3_512(md5_str.encode())
         s.sturand = hshb.hexdigest()
 
@@ -106,10 +106,10 @@ def gen_seg_for_sch():
     datas = [['学校','女生号段','男生号段'],]
     schs = select(s.sch for s in StudPh)
     for sch in schs:
-        woman_min = min(s.phid for s in StudPh if s.sch==sch and s.sex=='女')
-        woman_max = max(s.phid for s in StudPh if s.sch==sch and s.sex=='女')
-        man_min = min(s.phid for s in StudPh if s.sch==sch and s.sex=='男')
-        man_max = max(s.phid for s in StudPh if s.sch==sch and s.sex=='男')
+        woman_min = str(min(s.phid for s in StudPh if s.sch==sch and s.sex=='女'))
+        woman_max = str(max(s.phid for s in StudPh if s.sch==sch and s.sex=='女'))
+        man_min = str(min(s.phid for s in StudPh if s.sch==sch and s.sex=='男'))
+        man_max = str(max(s.phid for s in StudPh if s.sch==sch and s.sex=='男'))
         datas.append([sch,'-'.join((woman_min,woman_max)),'-'.join((man_min,man_max))])
     save_datas_xlsx('各校男女考生号段.xlsx',datas)
 
@@ -239,7 +239,7 @@ if __name__ == '__main__':
         if exe_flag == 'y':
             ensure = input('ensure:')
             if ensure == 'y':
-                gath_data(StudPh,STUDPH_KS,'studph',0)
+                gath_data(StudPh,STUDPH_KS,'studph',0,types=STUDPH_TYPE)
 
         exe_flag = input('是否执行添加用于生成考号的随机数(y/n)：')
         if exe_flag == 'y':

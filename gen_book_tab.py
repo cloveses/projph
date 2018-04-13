@@ -173,7 +173,7 @@ def count_stud_num():
         elif len(arrange_data) == 3:
             for sch in arrange_data[-1]:
                 studs_num = count(select(s for s in StudPh if s.sch==sch))
-                datas.append(exam_date,exam_addr,sch,studs_num,'')
+                datas.append([exam_date,exam_addr,sch,studs_num,''])
     return datas
 
 if __name__ == '__main__':
