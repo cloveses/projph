@@ -4,6 +4,7 @@ from reportlab.pdfbase.ttfonts import TTFont
 from reportlab.pdfbase import pdfmetrics
 from reportlab.lib.units import mm
 from reportlab.graphics.barcode import code39, code128, code93
+from ph_models import *
 
 ## 尺寸mm
 ID_SIZE = (210,99)
