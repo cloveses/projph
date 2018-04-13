@@ -33,10 +33,11 @@ def gath_data(tab_obj,ks,directory,grid_end=1,start_row=1,types=None,start_col=0
         nrows = ws.nrows
         for i in range(start_row,nrows-grid_end):
             datas = ws.row_values(i)
+            datas = [data.strip() if isinstance(data,str) else data for data in datas[start_col:]]
             if types is None:
-                datas = {k:v for k,v in zip(ks,datas[start_col:]) if v}
+                datas = {k:v for k,v in zip(ks,datas) if v}
             else:
-                datas = {k:t(v) for k,v,t in zip(ks,datas[start_col:],types) if v}
+                datas = {k:t(v) for k,v,t in zip(ks,datas,types) if v}
             # print(datas)
             tab_obj(**datas)
 
@@ -130,20 +131,34 @@ def check_files_select(directory,types,grid_end=0,start_row=1):
                 datas = ws.row_values(i)
                 for index,(d,t) in enumerate(zip(datas,types)):
                     try:
+                        if isinstance(d,str):
+                            d = d.strip()
                         if d != '':
                             t(d)
                     except:
+                        print(datas)
                         infos.append('文件：{}中，第{}行，第{}列数据有误'.format(file,i+1,index+1))
-                    else:
-                        selects = [int(i) for i in datas[-4:]]
-                        if not (sum(selects) == 0 or (selects[0]+selects[1] == 1 and selects[-2]+selects[-1]==1)):
-                            infos.append('文件：{}中，第{}行选项有误'.format(file,i+1))
         print('检验的目录：',directory)
         if infos:
             for info in infos:
                 print(info)
+        #选项校验
+        if not infos:
+            for file in files:
+                wb = xlrd.open_workbook(file)
+                ws = wb.sheets()[0]
+                nrows = ws.nrows
+                for i in range(start_row,nrows-grid_end):
+                    datas = ws.row_values(i)
+                    datas = [i.replace(' ','') if isinstance(i,str) else i for i in datas[-4:]]
+                    selects = [int(i) if i else 0 for i in datas]
+                    if not (sum(selects) == 0 or (selects[0]+selects[1] == 1 and selects[-2]+selects[-1]==1)):
+                        infos.append('文件：{}中，第{}行选项有误'.format(file,i+1))
+        if infos:
+            for info in infos:
+                print(info)
         else:
-            print(file,'数据检验通过！')
+            print('检验通过！')
 
 # 检验各校上报的体育免考生数据
 def check_files_other(directory,types,grid_end=0,start_row=1):
@@ -158,6 +173,8 @@ def check_files_other(directory,types,grid_end=0,start_row=1):
                 datas = ws.row_values(i)
                 for index,(d,t) in enumerate(zip(datas,types)):
                     try:
+                        if isinstance(d,str):
+                            d = d.strip()
                         if d != '':
                             t(d)
                     except:
