@@ -44,8 +44,9 @@ class  StudPh(db.Entity):
     sturand = Optional(float,nullable = True)
 
     # 2019 年启动字段hashlib_sha3_512 乱序，
-    # 以达到稳定排号(只要导入数据文件相同，多次排号不变)
-    sturand = Optional(str,nullable=True)
+    # 以达到稳定排号（只要考试编排exam_prog_set.py
+    # 不变，每次运行生成准考证号相同）
+    # sturand = Optional(str,nullable=True)
 
     # 免考标志
     free_flag = Optional(bool,nullable = True)

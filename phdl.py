@@ -45,8 +45,11 @@ def gath_data(tab_obj,ks,directory,grid_end=1,start_row=1,types=None,start_col=0
 @db_session
 def set_rand():
     for s in StudPh.select(): 
-        # s.sturand = random.random() * 10000
-        md5_str = ''.join((str(s.id),s.signid,s.name,s.sex,s.idcode,s.sch,s.schcode))
+        # s.sturand = random.random() * 10000 #仅2018年使用
+        
+        # 2019年启用以达到稳定生成准考证号（只要考试编排exam_prog_set.py
+        # 不变，每次运行生成准考证号相同）
+        md5_str = ''.join((s.signid,s.name,s.sex,s.idcode,s.sch,s.schcode))
         hshb = hashlib.sha3_512(md5_str.encode())
         s.sturand = hshb.hexdigest()
 
