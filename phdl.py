@@ -17,9 +17,10 @@ __author__ = "cloveses"
 # 获取指定目录中所有文件
 def get_files(directory):
     files = []
-    files = os.listdir(directory)
-    files = [f for f in files if f.endswith('.xls') or f.endswith('.xlsx')]
-    files = [os.path.join(directory,f) for f in files]
+    if os.path.exists(directory)
+        files = os.listdir(directory)
+        files = [f for f in files if f.endswith('.xls') or f.endswith('.xlsx')]
+        files = [os.path.join(directory,f) for f in files]
     return files
 
 # 将电子表格中数据导入数据库中
