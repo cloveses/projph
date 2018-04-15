@@ -180,8 +180,8 @@ if __name__ == '__main__':
     # DATAS = [['0','1'] for i in range(50)]
     # elements = gen_elements(DATAS)
     # gen_pdf(elements)
-    db.bind(**DB_PARAMS)
-    db.generate_mapping(create_tables=True)
+    # db.bind(**DB_PARAMS)
+    # db.generate_mapping(create_tables=True)
     gen_book_tbl()
     # count_stud_num()
 
