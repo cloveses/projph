@@ -114,7 +114,8 @@ def gen_pdf(dir_name,sch_name,studs,page_num=8):
 # 按学校生成准考证
 @db_session
 def gen_examid_sch(dir_name):
-    schs = select(s.sch for s in StudPh)
+    # schs = select(s.sch for s in StudPh)
+    schs = ('泗县丁湖中学','泗县黑塔中学','泗县黄圩中学','泗县山头中学','泗县杨集中学','泗县光明学校')
     for sch in schs:
         datas = select(s 
          for s in StudPh if s.sch==sch).order_by(StudPh.classcode,StudPh.phid)
