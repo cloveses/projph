@@ -39,6 +39,7 @@ class  StudPh(db.Entity):
     schcode = Required(str)
     exam_addr = Optional(str,nullable = True)
     exam_date = Optional(str,nullable = True)
+    classcode = Required(str)
     
     # 用于乱序 2018年使用
     sturand = Optional(float,nullable = True)
@@ -100,8 +101,8 @@ ITEM_SELECT_KS = ('schseq','signid','phid','name',
 ITEM_SELECT_TYPE = (int,str,str,str,int,int,int,int)
 
 # 导入所有考生信息的字段名、数据类型
-STUDPH_KS = ('signid','name','sex','idcode','sch','schcode')
-STUDPH_TYPE = (str,str,str,str,str,str)
+STUDPH_KS = ('signid','name','sex','idcode','sch','schcode','classcode')
+STUDPH_TYPE = (str,str,str,str,str,str,str)
 
 db.bind(**DB_PARAMS)
 db.generate_mapping(create_tables=True)
