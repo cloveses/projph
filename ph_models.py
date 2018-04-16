@@ -39,7 +39,7 @@ class  StudPh(db.Entity):
     schcode = Required(str)
     exam_addr = Optional(str,nullable = True)
     exam_date = Optional(str,nullable = True)
-    classcode = Required(str)
+    classcode = Optional(str,nullable = True)
     
     # 用于乱序 2018年使用
     sturand = Optional(float,nullable = True)

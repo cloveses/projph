@@ -17,7 +17,7 @@ __author__ = "cloveses"
 # 获取指定目录中所有文件
 def get_files(directory):
     files = []
-    if os.path.exists(directory)
+    if os.path.exists(directory):
         files = os.listdir(directory)
         files = [f for f in files if f.endswith('.xls') or f.endswith('.xlsx')]
         files = [os.path.join(directory,f) for f in files]
@@ -126,8 +126,8 @@ def gen_all_examid():
 def check_files_select(directory,types,grid_end=0,start_row=1):
     files = get_files(directory)
     if files:
-        infos = []
         for file in files:
+            infos = []
             wb = xlrd.open_workbook(file)
             ws = wb.sheets()[0]
             nrows = ws.nrows
@@ -140,12 +140,15 @@ def check_files_select(directory,types,grid_end=0,start_row=1):
                         if d != '':
                             t(d)
                     except:
-                        print(datas)
+                        # print(datas)
                         infos.append('文件：{}中，第{}行，第{}列数据有误'.format(file,i+1,index+1))
+            if infos:
+                print(file,'数据格式有误！')
+                print(infos)
         print('检验的目录：',directory)
-        if infos:
-            for info in infos:
-                print(info)
+        # if infos:
+        #     for info in infos:
+        #         print(info)
         #选项校验
         if not infos:
             for file in files:
@@ -166,10 +169,11 @@ def check_files_select(directory,types,grid_end=0,start_row=1):
 
 # 检验各校上报的体育免考生数据
 def check_files_other(directory,types,grid_end=0,start_row=1):
+    print('检验的目录：',directory)
     files = get_files(directory)
     if files:
-        infos = []
         for file in files:
+            infos = []
             wb = xlrd.open_workbook(file)
             ws = wb.sheets()[0]
             nrows = ws.nrows
@@ -183,12 +187,12 @@ def check_files_other(directory,types,grid_end=0,start_row=1):
                             t(d)
                     except:
                         infos.append('文件：{}中，第{}行，第{}列数据有误'.format(file,i+1,index+1))
-        print('检验的目录：',directory)
-        if infos:
-            for info in infos:
-                print(info)
-        else:
-            print(file,'数据检验通过！')
+            if infos:
+                # for info in infos:
+                #     print(info)
+                print(file,'错误！')
+            else:
+                print(file,'数据检验通过！')
 
 # 获取指定中考报名号学生的所在学校
 @db_session
@@ -231,71 +235,73 @@ def put2studph():
 
 
 if __name__ == '__main__':
-    print('注意：执行时应将有关字体文件放入当前目录中')
-    print('''执行前所有数据导入与生成要具备两个条件：
-        1.有要导入的考生信息表(在 studph 子目录中,注意字段顺序)，
-        2.exam_prog_sets.py 文件中有考试日程安排信息和准考证前缀码
-        ''')
-    exe_flag = input('是否执行前期所有数据导入与生成(y/n)：')
-    if exe_flag == 'y':
+    # print('注意：执行时应将有关字体文件放入当前目录中')
+    # print('''执行前所有数据导入与生成要具备两个条件：
+    #     1.有要导入的考生信息表(在 studph 子目录中,注意字段顺序)，
+    #     2.exam_prog_sets.py 文件中有考试日程安排信息和准考证前缀码
+    #     ''')
+    # exe_flag = input('是否执行前期所有数据导入与生成(y/n)：')
+    # if exe_flag == 'y':
 
-        exe_flag = input('是否执行考生信息导入(y/n)：')
-        if exe_flag == 'y':
-            ensure = input('ensure:')
-            if ensure == 'y':
-                gath_data(StudPh,STUDPH_KS,'studph',0,types=STUDPH_TYPE)
+    #     exe_flag = input('是否执行考生信息导入(y/n)：')
+    #     if exe_flag == 'y':
+    #         ensure = input('ensure:')
+    #         if ensure == 'y':
+    #             gath_data(StudPh,STUDPH_KS,'studph',0,types=STUDPH_TYPE)
 
-        exe_flag = input('是否执行添加用于生成考号的随机数(y/n)：')
-        if exe_flag == 'y':
-            ensure = input('ensure:')
-            if ensure == 'y':
-                set_rand()
+    #     exe_flag = input('是否执行添加用于生成考号的随机数(y/n)：')
+    #     if exe_flag == 'y':
+    #         ensure = input('ensure:')
+    #         if ensure == 'y':
+    #             set_rand()
 
-        exe_flag = input('是否执行生成考生准考证号并安排考点和考试时间(y/n)：')
-        if exe_flag == 'y':
-            ensure = input('ensure:')
-            if ensure == 'y':
-                arrange_phid()
+    #     exe_flag = input('是否执行生成考生准考证号并安排考点和考试时间(y/n)：')
+    #     if exe_flag == 'y':
+    #         ensure = input('ensure:')
+    #         if ensure == 'y':
+    #             arrange_phid()
 
-        exe_flag = input('是否执行导出各校考生报名号和准考证号(y/n)：')
-        if exe_flag == 'y':
-            get_sch_data_xls()
+    #     exe_flag = input('是否执行导出各校考生报名号和准考证号(y/n)：')
+    #     if exe_flag == 'y':
+    #         get_sch_data_xls()
 
-        exe_flag = input('是否执行生成各校男女考生准考证号段(y/n)：')
-        if exe_flag == 'y':
-            gen_seg_for_sch() #排理化实验用
+    #     exe_flag = input('是否执行生成各校男女考生准考证号段(y/n)：')
+    #     if exe_flag == 'y':
+    #         gen_seg_for_sch() #排理化实验用
 
-        exe_flag = input('是否执行生成各考点异常登记表(y/n)：')
-        if exe_flag == 'y':
-            datas = gen_book_tbl()
-            save_datas_xlsx('各时间段各考点考试分组号.xlsx',datas)
+    #     exe_flag = input('是否执行生成各考点异常登记表(y/n)：')
+    #     if exe_flag == 'y':
+    #         datas = gen_book_tbl()
+    #         save_datas_xlsx('各时间段各考点考试分组号.xlsx',datas)
 
-        exe_flag = input('是否执行生成各时间段各考点考生人数(y/n)：')
-        if exe_flag == 'y':
-            datas = count_stud_num()
-            save_datas_xlsx('各时间段各考点考生人数.xlsx',datas)
+    #     exe_flag = input('是否执行生成各时间段各考点考生人数(y/n)：')
+    #     if exe_flag == 'y':
+    #         datas = count_stud_num()
+    #         save_datas_xlsx('各时间段各考点考生人数.xlsx',datas)
+
+    # # print('''
+    # #     生成准考证,照片文件子目录为pho：
+    # #     ''')
+    # # exe_flag = input('启动生成准考证？(y/n)：')
+    # # if exe_flag == 'y':
+    # #     gen_all_examid()
+
 
     # print('''
-    #     生成准考证,照片文件子目录为pho：
+    #     要检验的免试表和选项表应分别存放于以下子目录中：
+    #     freeexam
+    #     itemselect
     #     ''')
-    # exe_flag = input('启动生成准考证？(y/n)：')
+    # exe_flag = input('启动检验免试表xls数据和选项表xls数据(y/n)：')
     # if exe_flag == 'y':
-    #     gen_all_examid()
-
-
-    print('''
-        要检验的免试表和选项表应分别存放于以下子目录中：
-        freeexam
-        itemselect
-        ''')
-    exe_flag = input('启动检验免试表xls数据和选项表xls数据(y/n)：')
-    if exe_flag == 'y':
-        check_files_other('freeexam',FREE_EXAM_TYPE)
-        check_files_select('itemselect',ITEM_SELECT_TYPE)
+    #     check_files_other('freeexam',FREE_EXAM_TYPE)
+    #     check_files_select('itemselect',ITEM_SELECT_TYPE)
         
-    exe_flag = input('免试表xls和选项表xls导入到数据库中，验证后放在studph中(y/n)：')
-    if exe_flag == 'y':
-        gath_data(FreeExam,FREE_EXAM_KS,'freeexam',0,types=FREE_EXAM_TYPE)
-        gath_data(ItemSelect,ITEM_SELECT_KS,'itemselect',0,types=ITEM_SELECT_TYPE) # 末尾行无多余数据
-        check_select()
-        put2studph()
+    # exe_flag = input('免试表xls和选项表xls导入到数据库中，验证后放在studph中(y/n)：')
+    # if exe_flag == 'y':
+    #     gath_data(FreeExam,FREE_EXAM_KS,'freeexam',0,types=FREE_EXAM_TYPE)
+    #     gath_data(ItemSelect,ITEM_SELECT_KS,'itemselect',0,types=ITEM_SELECT_TYPE) # 末尾行无多余数据
+    #     check_select()
+    #     put2studph()
+    check_files_other('freeexam',FREE_EXAM_TYPE)
+    # check_files_select('itemselect',ITEM_SELECT_TYPE)

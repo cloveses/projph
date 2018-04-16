@@ -4,7 +4,7 @@ import xlrd
 # 修正错误临时用
 @db_session
 def edit_phid_temp():
-    wb = xlrd.open_workbook('data.xlsx')
+    wb = xlrd.open_workbook('data.xls')
     ws = wb.sheets()[0]
     nrows = ws.nrows
     for i in range(1,nrows):
