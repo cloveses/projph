@@ -23,6 +23,42 @@ def get_files(directory):
         files = [os.path.join(directory,f) for f in files]
     return files
 
+def chg_itemselect_types(data):
+    data[0] = str(int(data[0]))
+    data[1] = str(int(data[1]))
+    data[2] = str(int(data[2]))
+    data[3] = str(data[3])
+    for i in range(4,8):
+        data[i] = int(data[i]) if data[i] else 0
+    return data
+
+
+# 将电子表格中数据导入数据库中
+@db_session
+def gath_data_itemselect(tab_obj,ks,directory,grid_end=1,start_row=1,types=None,start_col=0,check_repeat=False):
+    """start_row＝1 有一行标题行；grid_end=1 末尾1行不导入
+    types       列数据类型
+    start_col   从第几列开始导入
+    """
+    files = get_files(directory)
+    for file in files:
+        print('import data from:',file)
+        wb = xlrd.open_workbook(file)
+        ws = wb.sheets()[0]
+        nrows = ws.nrows
+        for i in range(start_row,nrows-grid_end):
+            datas = ws.row_values(i)
+            datas = [data.strip() if isinstance(data,str) else data for data in datas[start_col:]]
+            signid = str(int(datas[1]))
+            if count(select(s for s in tab_obj if s.signid==signid)):
+                print('数据导入有重复，请检查：',datas,i)
+            else:
+                datas = chg_itemselect_types(datas)
+                if datas[3] == '吴春雨':
+                    print(datas,file)
+                # datas = {k:v for k,v in zip(ks,datas)}
+                # tab_obj(**datas)
+
 # 将电子表格中数据导入数据库中
 @db_session
 def gath_data(tab_obj,ks,directory,grid_end=1,start_row=1,types=None,start_col=0,check_repeat=False):
@@ -32,6 +68,7 @@ def gath_data(tab_obj,ks,directory,grid_end=1,start_row=1,types=None,start_col=0
     """
     files = get_files(directory)
     for file in files:
+        print('import data from:',file)
         wb = xlrd.open_workbook(file)
         ws = wb.sheets()[0]
         nrows = ws.nrows
@@ -310,5 +347,6 @@ if __name__ == '__main__':
     #     gath_data(ItemSelect,ITEM_SELECT_KS,'itemselect',0,types=ITEM_SELECT_TYPE) # 末尾行无多余数据
     #     check_select()
     #     put2studph()
-    check_files_other('freeexam',FREE_EXAM_TYPE)
+    # check_files_other('freeexam',FREE_EXAM_TYPE)
     # check_files_select('itemselect',ITEM_SELECT_TYPE)
+    gath_data_itemselect(ItemSelect,ITEM_SELECT_KS,'itemselect',0,types=ITEM_SELECT_TYPE,check_repeat=True) # 末尾行无多余数据
