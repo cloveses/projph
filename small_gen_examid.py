@@ -7,6 +7,8 @@ from reportlab.lib.units import mm
 from reportlab.graphics.barcode import code39, code128, code93
 from ph_models import *
 
+# 2018使用
+
 ## 尺寸mm
 ID_SIZE = (210,297)
 ## 水印文本
@@ -114,8 +116,7 @@ def gen_pdf(dir_name,sch_name,studs,page_num=8):
 # 按学校生成准考证
 @db_session
 def gen_examid_sch(dir_name):
-    # schs = select(s.sch for s in StudPh)
-    schs = ('泗县丁湖中学','泗县黑塔中学','泗县黄圩中学','泗县山头中学','泗县杨集中学','泗县光明学校')
+    schs = select(s.sch for s in StudPh)
     for sch in schs:
         datas = select(s 
          for s in StudPh if s.sch==sch).order_by(StudPh.classcode,StudPh.phid)
@@ -129,10 +130,12 @@ def gen_bak_examid(dir_name):
     exam_dates = select(s.exam_date for s in StudPh)
     for exam_date in exam_dates:
         for exam_addr in exam_addrs:
-            studs = select((s.phid,s.name,s.sex,s.exam_addr,s.sch,''.join(("Z",s.signid,'.jpg')))
-                for s in StudPh if s.exam_addr==exam_addr and s.exam_date==exam_date).order_by(StudPh.phid)
+            studs = select(s for s in StudPh if s.exam_addr==exam_addr and 
+                s.exam_date==exam_date).order_by(StudPh.phid)
+            studs = [(s.phid,s.name,s.sex,s.exam_addr,s.sch,s.schcode,s.signid) for s in studs]
             gen_pdf(dir_name,exam_addr+exam_date,studs)
 
 if __name__ == '__main__':
     # gen_pdf('idsd','泗县草沟中学',STUDS)
-    gen_examid_sch('idsd')
+    # gen_examid_sch('idsd')
+    gen_bak_examid('bakid')

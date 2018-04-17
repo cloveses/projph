@@ -25,8 +25,11 @@ def get_files(directory):
 
 # 将电子表格中数据导入数据库中
 @db_session
-def gath_data(tab_obj,ks,directory,grid_end=1,start_row=1,types=None,start_col=0):
-    """start_row＝1 有一行标题行；grid_end=1 末尾行不导入"""
+def gath_data(tab_obj,ks,directory,grid_end=1,start_row=1,types=None,start_col=0,check_repeat=False):
+    """start_row＝1 有一行标题行；grid_end=1 末尾1行不导入
+    types       列数据类型
+    start_col   从第几列开始导入
+    """
     files = get_files(directory)
     for file in files:
         wb = xlrd.open_workbook(file)
@@ -35,12 +38,16 @@ def gath_data(tab_obj,ks,directory,grid_end=1,start_row=1,types=None,start_col=0
         for i in range(start_row,nrows-grid_end):
             datas = ws.row_values(i)
             datas = [data.strip() if isinstance(data,str) else data for data in datas[start_col:]]
-            if types is None:
-                datas = {k:v for k,v in zip(ks,datas) if v}
+            signid = str(int(datas[1]))
+            if count(select(s for s in tab_obj if s.signid==signid)):
+                print('数据导入有重复，请检查：',datas,i)
             else:
-                datas = {k:t(v) for k,v,t in zip(ks,datas,types) if v}
-            # print(datas)
-            tab_obj(**datas)
+                if types is None:
+                    datas = {k:v for k,v in zip(ks,datas) if v}
+                else:
+                    datas = {k:t(v) for k,v,t in zip(ks,datas,types) if v}
+                # print(datas)
+                tab_obj(**datas)
 
 # 为所有考生设定随机值，以打乱报名号
 @db_session
