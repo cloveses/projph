@@ -54,10 +54,10 @@ def gath_data_itemselect(tab_obj,ks,directory,grid_end=1,start_row=1,types=None,
                 print('数据导入有重复，请检查：',datas,i)
             else:
                 datas = chg_itemselect_types(datas)
-                if datas[3] == '吴春雨':
+                if datas[3] in ['万浩男','孙滔','李灿灿','彭美学']:
                     print(datas,file)
-                # datas = {k:v for k,v in zip(ks,datas)}
-                # tab_obj(**datas)
+                datas = {k:v for k,v in zip(ks,datas)}
+                tab_obj(**datas)
 
 # 将电子表格中数据导入数据库中
 @db_session
@@ -277,6 +277,17 @@ def put2studph():
                 globe_option=stud.globe_option,
                 bend_option=stud.bend_option)
 
+# 导出各校体育考试确认表
+@db_session
+def dump_itemselect_for_sch():
+    schs = select(s.sch for s in StudPh)
+    for sch in schs:
+        all_signid = select(s.signid for s in StudPh if s.sch==sch)
+        studs = select((s.signid,s.phid,s.name,s.jump_option,
+            s.rope_option,s.globe_option,s.bend_option) for s in ItemSelect if s.signid in all_signid)[:]
+        datas = [['序号','中考报名号','准考证号','姓名','立定跳远','跳绳','实心球','体前屈'],]
+        datas.extend(studs)
+        save_datas_xlsx(sch+'确认表.xlsx',datas)
 
 if __name__ == '__main__':
     # print('注意：执行时应将有关字体文件放入当前目录中')
@@ -344,9 +355,17 @@ if __name__ == '__main__':
     # exe_flag = input('免试表xls和选项表xls导入到数据库中，验证后放在studph中(y/n)：')
     # if exe_flag == 'y':
     #     gath_data(FreeExam,FREE_EXAM_KS,'freeexam',0,types=FREE_EXAM_TYPE)
-    #     gath_data(ItemSelect,ITEM_SELECT_KS,'itemselect',0,types=ITEM_SELECT_TYPE) # 末尾行无多余数据
     #     check_select()
     #     put2studph()
     # check_files_other('freeexam',FREE_EXAM_TYPE)
     # check_files_select('itemselect',ITEM_SELECT_TYPE)
-    gath_data_itemselect(ItemSelect,ITEM_SELECT_KS,'itemselect',0,types=ITEM_SELECT_TYPE,check_repeat=True) # 末尾行无多余数据
+    # 导入体育选项表
+    # gath_data_itemselect(ItemSelect,ITEM_SELECT_KS,'itemselect',0,types=ITEM_SELECT_TYPE,check_repeat=True) # 末尾行无多余数据
+    # 检查所有免试表
+    # check_files_other('freeexam',FREE_EXAM_TYPE)
+    # 导入免考表
+    # gath_data(FreeExam,FREE_EXAM_KS,'freeexam',0,types=FREE_EXAM_TYPE)
+    # 分校导出确认表
+    # dump_itemselect_for_sch()
+    # put2studph()
+    check_select()
