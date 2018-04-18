@@ -13,6 +13,8 @@ __author__ = "cloveses"
 # 导入初三考生免考申请表、选考项目确认表（excel格式）到数据库中
 # 二类表分别存放子目录：freeexam,itemselect之中
 
+class MyException(Exception):
+    pass
 
 # 获取指定目录中所有文件
 def get_files(directory):
@@ -23,22 +25,22 @@ def get_files(directory):
         files = [os.path.join(directory,f) for f in files]
     return files
 
-def chg_itemselect_types(data):
-    data[0] = str(int(data[0]))
-    data[1] = str(int(data[1]))
-    data[2] = str(int(data[2]))
-    data[3] = str(data[3])
-    for i in range(4,8):
-        data[i] = int(data[i]) if data[i] else 0
-    return data
+def compare_data(signid,phid,name):
+    # 比对关键信息中考报名号、体育考号和姓名是否有误
+    if count(select(s for s in StudPh if s.signid==signid and
+        s.phid==phid,s.name==name)):
+        return True
 
-
-# 将电子表格中数据导入数据库中
+# 将电子表格中数据导入数据库中,同时检验数据重复和关键信息错误
 @db_session
-def gath_data_itemselect(tab_obj,ks,directory,grid_end=1,start_row=1,types=None,start_col=0,check_repeat=False):
-    """start_row＝1 有一行标题行；grid_end=1 末尾1行不导入
+def gath_data(directory,tab_obj,convert_fun,start_row=1,
+        grid_end=0,start_col=0):
+    """
+    start_row＝1 有一行标题行；grid_end=1 末尾1行不导入
     types       列数据类型
     start_col   从第几列开始导入
+    tab_obj     导入的表模型名
+    convert_fun 数据转换函数
     """
     files = get_files(directory)
     for file in files:
@@ -48,43 +50,25 @@ def gath_data_itemselect(tab_obj,ks,directory,grid_end=1,start_row=1,types=None,
         nrows = ws.nrows
         for i in range(start_row,nrows-grid_end):
             datas = ws.row_values(i)
-            datas = [data.strip() if isinstance(data,str) else data for data in datas[start_col:]]
-            signid = str(int(datas[1]))
-            if count(select(s for s in tab_obj if s.signid==signid)):
-                print('数据导入有重复，请检查：',datas,i)
-            else:
-                datas = chg_itemselect_types(datas)
-                if datas[3] in ['万浩男','孙滔','李灿灿','彭美学']:
-                    print(datas,file)
-                datas = {k:v for k,v in zip(ks,datas)}
-                tab_obj(**datas)
-
-# 将电子表格中数据导入数据库中
-@db_session
-def gath_data(tab_obj,ks,directory,grid_end=1,start_row=1,types=None,start_col=0,check_repeat=False):
-    """start_row＝1 有一行标题行；grid_end=1 末尾1行不导入
-    types       列数据类型
-    start_col   从第几列开始导入
-    """
-    files = get_files(directory)
-    for file in files:
-        print('import data from:',file)
-        wb = xlrd.open_workbook(file)
-        ws = wb.sheets()[0]
-        nrows = ws.nrows
-        for i in range(start_row,nrows-grid_end):
-            datas = ws.row_values(i)
-            datas = [data.strip() if isinstance(data,str) else data for data in datas[start_col:]]
-            signid = str(int(datas[1]))
-            if count(select(s for s in tab_obj if s.signid==signid)):
-                print('数据导入有重复，请检查：',datas,i)
-            else:
-                if types is None:
-                    datas = {k:v for k,v in zip(ks,datas) if v}
+            datas = [data.strip() if isinstance(data,str) else data for 
+                data in datas[start_col:]]
+            datas = convert_fun(datas)
+            comp_datas = []
+            for k in ('signid,phid','name'):
+                comp_datas.append(datas[k])
+            if compare_data(comp_datas):
+                if count(select(s for s in tab_obj if s.signid==datas['signid'])):
+                    print('数据导入有重复，请检查：',datas,i)
+                    raise MyException('数据有重复')
                 else:
-                    datas = {k:t(v) for k,v,t in zip(ks,datas,types) if v}
-                # print(datas)
-                tab_obj(**datas)
+                    # if datas[3] in ['万浩男','孙滔','李灿灿','彭美学']:
+                    #     print(datas,file)
+                    tab_obj(**datas)
+            else:
+                print('关键信息有误：')
+                print(file,'第{}行:'.format(i+1),ws.row_values(i))
+                raise MyException('有关键信息错误！')
+
 
 # 为所有考生设定随机值，以打乱报名号
 @db_session
@@ -149,6 +133,7 @@ def get_sch_data_xls():
         datas.extend(studs)
         save_datas_xlsx(''.join((sch,'体育考号.xlsx')),datas)
 
+#导出各学校男女考生号段
 @db_session
 def gen_seg_for_sch():
     datas = [['学校','女生号段','男生号段'],]
@@ -161,10 +146,8 @@ def gen_seg_for_sch():
         datas.append([sch,'-'.join((woman_min,woman_max)),'-'.join((man_min,man_max))])
     save_datas_xlsx('各校男女考生号段.xlsx',datas)
 
-# 生成所有考生的准考证
-@db_session
-def gen_all_examid():
-    pass
+
+
 
 # 检验各校上报体育选项中数据
 def check_files_select(directory,types,grid_end=0,start_row=1):
@@ -354,18 +337,21 @@ if __name__ == '__main__':
         
     # exe_flag = input('免试表xls和选项表xls导入到数据库中，验证后放在studph中(y/n)：')
     # if exe_flag == 'y':
-    #     gath_data(FreeExam,FREE_EXAM_KS,'freeexam',0,types=FREE_EXAM_TYPE)
+    #     gath_data('freeexam',FreeExam,convert_freeexam_data)
+    #     gath_data('itemselect',ItemSelect,convert_itemselect_data)
     #     check_select()
     #     put2studph()
-    check_files_other('freeexam',FREE_EXAM_TYPE)
-    check_files_select('itemselect',ITEM_SELECT_TYPE)
-    # 导入体育选项表
-    gath_data_itemselect(ItemSelect,ITEM_SELECT_KS,'itemselect',0,types=ITEM_SELECT_TYPE,check_repeat=True) # 末尾行无多余数据
-    # 检查所有免表
-    check_files_other('freeexam',FREE_EXAM_TYPE)
-    # 导入免试表
-    gath_data(FreeExam,FREE_EXAM_KS,'freeexam',0,types=FREE_EXAM_TYPE)
-    # 分校导出确认表
-    # dump_itemselect_for_sch()
-    put2studph()
-    check_select()
+
+
+    # check_files_other('freeexam',FREE_EXAM_TYPE)
+    # check_files_select('itemselect',ITEM_SELECT_TYPE)
+    # # 导入体育选项表
+    # gath_data_itemselect(ItemSelect,ITEM_SELECT_KS,'itemselect',0,types=ITEM_SELECT_TYPE,check_repeat=True) # 末尾行无多余数据
+    # # 检查所有免表
+    # check_files_other('freeexam',FREE_EXAM_TYPE)
+    # # 导入免试表
+    # gath_data(FreeExam,FREE_EXAM_KS,'freeexam',0,types=FREE_EXAM_TYPE)
+    # # 分校导出确认表
+    # # dump_itemselect_for_sch()
+    # put2studph()
+    # check_select()

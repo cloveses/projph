@@ -78,6 +78,7 @@ class FreeExam(db.Entity):
     reason = Required(str)
     material = Required(str)
     memo = Optional(str)
+    freetype = Optional(int,default=0)
 
 # 选考项目确认表 附件6
 class ItemSelect(db.Entity):
@@ -105,13 +106,28 @@ STUDPH_KS = ('signid','name','sex','idcode','sch','schcode','classcode')
 STUDPH_TYPE = (str,str,str,str,str,str,str)
 
 
-def chg_itemselect_types(data):
+def convert_itemselect_data(data):
+    # schseq,signid,phid
     for i in range(3):
         data[i] = str(int(data[i]))
+    # name
     data[3] = str(data[3])
+    # 'jump_option','rope_option','globe_option','bend_option'
     for i in range(4,8):
         data[i] = int(data[i]) if data[i] else 0
     data = {k:v for k,v in zip(ITEM_SELECT_KS,datas)}
+    return data
+
+def convert_freeexam_data(data):
+    # schseq,signid,phid
+    for i in range(3):
+        data[i] = str(int(data[i]))
+    # name
+    data[3] = str(data[3])
+    # 'reason','material','memo'
+    for i in range(4,7):
+        data[i] = str(data[i])
+    data = {k:v for k,v in zip(FREE_EXAM_KS,datas)}
     return data
 
 
