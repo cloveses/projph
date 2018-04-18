@@ -78,7 +78,7 @@ class FreeExam(db.Entity):
     reason = Required(str)
     material = Required(str)
     memo = Optional(str)
-    # freetype = Optional(int,default=0,nullable = True)
+    freetype = Optional(int,default=0,nullable = True) #暂用
 
 # 选考项目确认表 附件6
 class ItemSelect(db.Entity):
@@ -115,7 +115,7 @@ def convert_itemselect_data(data):
     # 'jump_option','rope_option','globe_option','bend_option'
     for i in range(4,8):
         data[i] = int(data[i]) if data[i] else 0
-    data = {k:v for k,v in zip(ITEM_SELECT_KS,datas)}
+    data = {k:v for k,v in zip(ITEM_SELECT_KS,data)}
     return data
 
 def convert_freeexam_data(data):
@@ -127,7 +127,7 @@ def convert_freeexam_data(data):
     # 'reason','material','memo'
     for i in range(4,7):
         data[i] = str(data[i])
-    data = {k:v for k,v in zip(FREE_EXAM_KS,datas)}
+    data = {k:v for k,v in zip(FREE_EXAM_KS,data)}
     return data
 
 

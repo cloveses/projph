@@ -24,10 +24,11 @@ def get_files(directory):
         files = [os.path.join(directory,f) for f in files]
     return files
 
+@db_session
 def compare_data(signid,phid,name):
     # 比对关键信息中考报名号、体育考号和姓名是否有误
     if count(select(s for s in StudPh if s.signid==signid and
-        s.phid==phid,s.name==name)):
+        s.phid==phid and s.name==name)):
         return True
 
 # 将电子表格中数据导入数据库中,同时检验数据重复和关键信息错误
@@ -60,9 +61,9 @@ def gath_data(directory,start_row=1,grid_end=0,start_col=0):
                 data in datas[start_col:]]
             datas = convert_fun(datas)
             comp_datas = []
-            for k in ('signid,phid','name'):
+            for k in ('signid','phid','name'):
                 comp_datas.append(datas[k])
-            if compare_data(comp_datas):
+            if compare_data(*comp_datas):
                 if count(select(s for s in tab_obj if s.signid==datas['signid'])):
                     print('数据导入有重复，请检查：',datas,i)
                     raise MyException('数据有重复')
@@ -153,14 +154,14 @@ def gen_seg_for_sch():
     save_datas_xlsx('各校男女考生号段.xlsx',datas)
 
 # 检验体育选项是否符合要求
-def check_item_select(datas,row_number):
+def check_item_select(file,datas,row_number):
     datas = [i.replace(' ','') if isinstance(i,str) else i for i in datas[-4:]]
     selects = [int(i) if i else 0 for i in datas]
     if not (sum(selects) == 0 or (selects[0]+selects[1] == 1 and selects[-2]+selects[-1]==1)):
         return '文件：{}中，第{}行选项有误'.format(file,row_number)
 
 #检验体育选项表一行的数据类型
-def check_item_select_types(datas,row):
+def check_item_select_types(file,datas,row):
     for index,(d,t) in enumerate(zip(datas,ITEM_SELECT_TYPE)):
         try:
             if isinstance(d,str):
@@ -171,7 +172,7 @@ def check_item_select_types(datas,row):
             return '文件：{}中，第{}行，第{}列数据有误'.format(file,row,index+1)
 
 # 检验免试表一行的数据类型
-def check_free_exam_types(datas,row):
+def check_free_exam_types(file,datas,row):
     for index,(d,t) in enumerate(zip(datas,FREE_EXAM_TYPE)):
         try:
             if isinstance(d,str):
@@ -197,7 +198,7 @@ def check_files(directory,start_row=1,grid_end=0):
     else:
         raise MyException('目录名错误！')
     files = get_files(directory)
-    print('检验的目录：',directory)
+    print('\n','检验的目录：',directory)
     if files:
         for file in files:
             infos = []
@@ -209,7 +210,7 @@ def check_files(directory,start_row=1,grid_end=0):
                 continue
             for i in range(start_row,nrows-grid_end):
                 datas = ws.row_values(i)
-                info = check_types(datas,i+1)
+                info = check_types(file,datas,i+1)
                 if info:
                     infos.append('文件：{}中，第{}行，第{}列数据有误'.format(file,i+1,index+1))
                 if len(infos) >= 3:
@@ -220,10 +221,11 @@ def check_files(directory,start_row=1,grid_end=0):
             # 校验行数据
             if not infos and check_fun is not None:
                 for i in range(start_row,nrows-grid_end):
-                    info = check_fun(ws.row_values(i),i+1)
+                    info = check_fun(file,ws.row_values(i),i+1)
                     if info:
                         infos.append(info)
             if infos:
+                print()
                 print('检验失败：',file)
                 for info in infos:
                     print(info)
@@ -301,11 +303,21 @@ def freexam_type2studph(file='全县免考表.xlsx'):
         datas = ws.row_values(i)
         if isinstance(datas[-1],float):
             freetype = int(datas[-1])
-            stud = select(s for s in StudPh if s.signid==int(datas[0])).first()
+            stud = select(s for s in StudPh if s.signid==str(int(datas[0]))).first()
             if stud:
                 stud.freetype = freetype
             else:
                 print('无该考生：',int(datas[0]),int(datas[1]),datas[2])
+
+TOTAL_SCORE = 75
+
+@db_session
+def set_freeexam_score():
+    for stud in select(s for s in StudPh if s.free_flag==True):
+        if stud.freetype == 1:
+            stud.total_score = TOTAL_SCORE
+        else:
+            stud.total_score = int(TOTAL_SCORE * 0.6)
 
 
 if __name__ == '__main__':
@@ -358,18 +370,19 @@ if __name__ == '__main__':
     #     freeexam
     #     itemselect
     #     ''')
-    check_files('freeexam')
-    check_files('itemselect')
+    # check_files('freeexam')
+    # check_files('itemselect')
         
-    # exe_flag = input('免试表xls和选项表xls导入到数据库中，验证后放在studph中(y/n)：')
-    # if exe_flag == 'y':
-    #     gath_data('freeexam')
-    #     gath_data('itemselect')
-    #     check_select()
+    exe_flag = input('免试表xls和选项表xls导入到数据库中并检验(y/n)：')
+    if exe_flag == 'y':
+        gath_data('freeexam')
+        gath_data('itemselect')
+        check_select()
 
 
-    # 数据合并到正式表StudPh中
-    #     put2studph()
+    # # 数据合并到正式表StudPh中
+    # put2studph()
 
-    dump_freeexam_studs() #导出全县免试表
-    freexam_type2studph() #从文件 全县免考表.xlsx导入免试类型至总表 
+    # dump_freeexam_studs() #导出全县免试表
+    # freexam_type2studph() #从文件 全县免考表.xlsx导入免试类型至总表 
+    set_freeexam_score() #免考学生赋分

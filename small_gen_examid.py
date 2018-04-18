@@ -7,7 +7,7 @@ from reportlab.lib.units import mm
 from reportlab.graphics.barcode import code39, code128, code93
 from ph_models import *
 
-# 2018使用
+# 2018使用 每页A4纸上打印8张准考证
 
 ## 尺寸mm
 ID_SIZE = (210,297)
