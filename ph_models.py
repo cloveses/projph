@@ -65,7 +65,7 @@ class  StudPh(db.Entity):
     jump_score = Optional(int,nullable = True)
     skill_score = Optional(int,nullable = True)
     total_score = Optional(int,nullable = True)
-
+    freetype = Optional(int,default=0,nullable = True)
     memo = Optional(str,nullable = True)
 
 
@@ -78,7 +78,7 @@ class FreeExam(db.Entity):
     reason = Required(str)
     material = Required(str)
     memo = Optional(str)
-    freetype = Optional(int,default=0)
+    # freetype = Optional(int,default=0,nullable = True)
 
 # 选考项目确认表 附件6
 class ItemSelect(db.Entity):

@@ -6,7 +6,6 @@ from ph_models import *
 import random,math,itertools
 from exam_prog_sets import arrange_datas,PREFIX
 from gen_book_tab import gen_book_tbl,count_stud_num
-from gen_examid import gen_pdf
 
 __author__ = "cloveses"
 
@@ -33,8 +32,7 @@ def compare_data(signid,phid,name):
 
 # 将电子表格中数据导入数据库中,同时检验数据重复和关键信息错误
 @db_session
-def gath_data(directory,tab_obj,convert_fun,start_row=1,
-        grid_end=0,start_col=0):
+def gath_data(directory,start_row=1,grid_end=0,start_col=0):
     """
     start_row＝1 有一行标题行；grid_end=1 末尾1行不导入
     types       列数据类型
@@ -42,6 +40,14 @@ def gath_data(directory,tab_obj,convert_fun,start_row=1,
     tab_obj     导入的表模型名
     convert_fun 数据转换函数
     """
+    if directory == 'freeexam':
+        tab_obj = FreeExam
+        convert_fun = convert_freeexam_data
+    elif directory == 'itemselect':
+        tab_obj = ItemSelect
+        convert_fun = convert_itemselect_data
+    else:
+        raise MyException('目录名错误！')
     files = get_files(directory)
     for file in files:
         print('import data from:',file)
@@ -146,80 +152,83 @@ def gen_seg_for_sch():
         datas.append([sch,'-'.join((woman_min,woman_max)),'-'.join((man_min,man_max))])
     save_datas_xlsx('各校男女考生号段.xlsx',datas)
 
+# 检验体育选项是否符合要求
+def check_item_select(datas,row_number):
+    datas = [i.replace(' ','') if isinstance(i,str) else i for i in datas[-4:]]
+    selects = [int(i) if i else 0 for i in datas]
+    if not (sum(selects) == 0 or (selects[0]+selects[1] == 1 and selects[-2]+selects[-1]==1)):
+        return '文件：{}中，第{}行选项有误'.format(file,row_number)
 
+#检验体育选项表一行的数据类型
+def check_item_select_types(datas,row):
+    for index,(d,t) in enumerate(zip(datas,ITEM_SELECT_TYPE)):
+        try:
+            if isinstance(d,str):
+                d = d.strip()
+            if d != '':
+                t(d)
+        except:
+            return '文件：{}中，第{}行，第{}列数据有误'.format(file,row,index+1)
 
+# 检验免试表一行的数据类型
+def check_free_exam_types(datas,row):
+    for index,(d,t) in enumerate(zip(datas,FREE_EXAM_TYPE)):
+        try:
+            if isinstance(d,str):
+                d = d.strip()
+            if d != '':
+                t(d)
+        except:
+            return '文件：{}中，第{}行，第{}列数据有误'.format(file,row,index+1)
 
-# 检验各校上报体育选项中数据
-def check_files_select(directory,types,grid_end=0,start_row=1):
+# 检验xls文件中数据
+# 检验各校上报体育选项和免试名单xls文件中数据
+# 只要指定固定的目录名即可：freeexam,itemselect
+
+def check_files(directory,start_row=1,grid_end=0):
+    if directory == 'freeexam':
+        check_types = check_free_exam_types
+        col_num = 7
+        check_fun = None
+    elif directory == 'itemselect':
+        check_types = check_item_select_types
+        col_num = 8
+        check_fun = check_item_select
+    else:
+        raise MyException('目录名错误！')
     files = get_files(directory)
-    if files:
-        for file in files:
-            infos = []
-            wb = xlrd.open_workbook(file)
-            ws = wb.sheets()[0]
-            nrows = ws.nrows
-            for i in range(start_row,nrows-grid_end):
-                datas = ws.row_values(i)
-                for index,(d,t) in enumerate(zip(datas,types)):
-                    try:
-                        if isinstance(d,str):
-                            d = d.strip()
-                        if d != '':
-                            t(d)
-                    except:
-                        # print(datas)
-                        infos.append('文件：{}中，第{}行，第{}列数据有误'.format(file,i+1,index+1))
-            if infos:
-                print(file,'数据格式有误！')
-                print(infos)
-        print('检验的目录：',directory)
-        # if infos:
-        #     for info in infos:
-        #         print(info)
-        #选项校验
-        if not infos:
-            for file in files:
-                wb = xlrd.open_workbook(file)
-                ws = wb.sheets()[0]
-                nrows = ws.nrows
-                for i in range(start_row,nrows-grid_end):
-                    datas = ws.row_values(i)
-                    datas = [i.replace(' ','') if isinstance(i,str) else i for i in datas[-4:]]
-                    selects = [int(i) if i else 0 for i in datas]
-                    if not (sum(selects) == 0 or (selects[0]+selects[1] == 1 and selects[-2]+selects[-1]==1)):
-                        infos.append('文件：{}中，第{}行选项有误'.format(file,i+1))
-        if infos:
-            for info in infos:
-                print(info)
-        else:
-            print('检验通过！')
-
-# 检验各校上报的体育免考生数据
-def check_files_other(directory,types,grid_end=0,start_row=1):
     print('检验的目录：',directory)
-    files = get_files(directory)
     if files:
         for file in files:
             infos = []
             wb = xlrd.open_workbook(file)
             ws = wb.sheets()[0]
             nrows = ws.nrows
+            if ws.ncols != col_num:
+                print('数据列数不符合要求:',file)
+                continue
             for i in range(start_row,nrows-grid_end):
                 datas = ws.row_values(i)
-                for index,(d,t) in enumerate(zip(datas,types)):
-                    try:
-                        if isinstance(d,str):
-                            d = d.strip()
-                        if d != '':
-                            t(d)
-                    except:
-                        infos.append('文件：{}中，第{}行，第{}列数据有误'.format(file,i+1,index+1))
+                info = check_types(datas,i+1)
+                if info:
+                    infos.append('文件：{}中，第{}行，第{}列数据有误'.format(file,i+1,index+1))
+                if len(infos) >= 3:
+                    print('数据类型错误：',file)
+                    for info in infos:
+                        print(info)
+                    break
+            # 校验行数据
+            if not infos and check_fun is not None:
+                for i in range(start_row,nrows-grid_end):
+                    info = check_fun(ws.row_values(i),i+1)
+                    if info:
+                        infos.append(info)
             if infos:
-                # for info in infos:
-                #     print(info)
-                print(file,'错误！')
+                print('检验失败：',file)
+                for info in infos:
+                    print(info)
             else:
-                print(file,'数据检验通过！')
+                print('检验通过：',file)
 
 # 获取指定中考报名号学生的所在学校
 @db_session
@@ -237,11 +246,13 @@ def check_select():
         if (stud.jump_option + stud.rope_option + stud.globe_option +
                     stud.bend_option) == 0:
             if count(FreeExam.select(lambda s:s.signid == stud.signid)) != 1:
-                print(stud.signid,stud.name,get_sch(stud.signid),'未免考考生无选项！')
-        else:
-            if not (stud.jump_option + stud.rope_option == 1 and 
+                print(stud.signid,stud.name,get_sch(stud.signid),'数据错误：未免考考生无体育选项！')
+        elif not (stud.jump_option + stud.rope_option == 1 and 
                     stud.globe_option + stud.bend_option == 1):
                 print(stud.signid,stud.name,get_sch(stud.signid),'选项有误，请检查！')
+        else:
+            if count(FreeExam.select(lambda s:s.signid == stud.signid)) >= 1:
+                print(stud.signid,stud.name,get_sch(stud.signid),'数据错误：该生有体育选项，也有免试！')
 
 # 导入考生选项表至总表StudPh
 @db_session
@@ -271,6 +282,31 @@ def dump_itemselect_for_sch():
         datas = [['序号','中考报名号','准考证号','姓名','立定跳远','跳绳','实心球','体前屈'],]
         datas.extend(studs)
         save_datas_xlsx(sch+'确认表.xlsx',datas)
+
+# 导出免试总表
+@db_session
+def dump_freeexam_studs():
+    studs = select(s for s in FreeExam)
+    studs = [(s.signid,s.phid,s.name,s.reason,s.material,s.memo) for s in studs]
+    datas = [['中考报名号','准考证号','姓名','免考原因','申请材料','备注'],]
+    datas.extend(studs)
+    save_datas_xlsx('全县免考表.xlsx',datas)
+
+# 导入免试类型 1 满分
+@db_session
+def freexam_type2studph(file='全县免考表.xlsx'):
+    wb = xlrd.open_workbook(file)
+    ws = wb.sheets()[0]
+    for i in range(ws.nrows):
+        datas = ws.row_values(i)
+        if isinstance(datas[-1],float):
+            freetype = int(datas[-1])
+            stud = select(s for s in StudPh if s.signid==int(datas[0])).first()
+            if stud:
+                stud.freetype = freetype
+            else:
+                print('无该考生：',int(datas[0]),int(datas[1]),datas[2])
+
 
 if __name__ == '__main__':
     # print('注意：执行时应将有关字体文件放入当前目录中')
@@ -317,41 +353,23 @@ if __name__ == '__main__':
     #         datas = count_stud_num()
     #         save_datas_xlsx('各时间段各考点考生人数.xlsx',datas)
 
-    # # print('''
-    # #     生成准考证,照片文件子目录为pho：
-    # #     ''')
-    # # exe_flag = input('启动生成准考证？(y/n)：')
-    # # if exe_flag == 'y':
-    # #     gen_all_examid()
-
-
     # print('''
-    #     要检验的免试表和选项表应分别存放于以下子目录中：
+    #     要检验的各校上报的免试表和选项表应分别存放于以下子目录中：
     #     freeexam
     #     itemselect
     #     ''')
-    # exe_flag = input('启动检验免试表xls数据和选项表xls数据(y/n)：')
-    # if exe_flag == 'y':
-    #     check_files_other('freeexam',FREE_EXAM_TYPE)
-    #     check_files_select('itemselect',ITEM_SELECT_TYPE)
+    check_files('freeexam')
+    check_files('itemselect')
         
     # exe_flag = input('免试表xls和选项表xls导入到数据库中，验证后放在studph中(y/n)：')
     # if exe_flag == 'y':
-    #     gath_data('freeexam',FreeExam,convert_freeexam_data)
-    #     gath_data('itemselect',ItemSelect,convert_itemselect_data)
+    #     gath_data('freeexam')
+    #     gath_data('itemselect')
     #     check_select()
+
+
+    # 数据合并到正式表StudPh中
     #     put2studph()
 
-
-    # check_files_other('freeexam',FREE_EXAM_TYPE)
-    # check_files_select('itemselect',ITEM_SELECT_TYPE)
-    # # 导入体育选项表
-    # gath_data_itemselect(ItemSelect,ITEM_SELECT_KS,'itemselect',0,types=ITEM_SELECT_TYPE,check_repeat=True) # 末尾行无多余数据
-    # # 检查所有免表
-    # check_files_other('freeexam',FREE_EXAM_TYPE)
-    # # 导入免试表
-    # gath_data(FreeExam,FREE_EXAM_KS,'freeexam',0,types=FREE_EXAM_TYPE)
-    # # 分校导出确认表
-    # # dump_itemselect_for_sch()
-    # put2studph()
-    # check_select()
+    dump_freeexam_studs() #导出全县免试表
+    freexam_type2studph() #从文件 全县免考表.xlsx导入免试类型至总表 
