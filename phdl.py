@@ -357,15 +357,15 @@ if __name__ == '__main__':
     #     gath_data(FreeExam,FREE_EXAM_KS,'freeexam',0,types=FREE_EXAM_TYPE)
     #     check_select()
     #     put2studph()
-    # check_files_other('freeexam',FREE_EXAM_TYPE)
-    # check_files_select('itemselect',ITEM_SELECT_TYPE)
+    check_files_other('freeexam',FREE_EXAM_TYPE)
+    check_files_select('itemselect',ITEM_SELECT_TYPE)
     # 导入体育选项表
-    # gath_data_itemselect(ItemSelect,ITEM_SELECT_KS,'itemselect',0,types=ITEM_SELECT_TYPE,check_repeat=True) # 末尾行无多余数据
-    # 检查所有免试表
-    # check_files_other('freeexam',FREE_EXAM_TYPE)
-    # 导入免考表
-    # gath_data(FreeExam,FREE_EXAM_KS,'freeexam',0,types=FREE_EXAM_TYPE)
+    gath_data_itemselect(ItemSelect,ITEM_SELECT_KS,'itemselect',0,types=ITEM_SELECT_TYPE,check_repeat=True) # 末尾行无多余数据
+    # 检查所有免表
+    check_files_other('freeexam',FREE_EXAM_TYPE)
+    # 导入免试表
+    gath_data(FreeExam,FREE_EXAM_KS,'freeexam',0,types=FREE_EXAM_TYPE)
     # 分校导出确认表
     # dump_itemselect_for_sch()
-    # put2studph()
+    put2studph()
     check_select()
