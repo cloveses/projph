@@ -36,7 +36,7 @@ BAR_Y = 14
 
 # 照片打印位置
 IMG_X = 50
-IMG_Y = 20
+IMG_Y = 22
 
 pos_trans = ((0,0),(0,72),(0,72*2),(0,72*3),
     (105,0),(105,72),(105,72*2),(105,72*3))
@@ -80,7 +80,7 @@ def draw_one(canv,pos_trans,stud):
     # 绘制照片
     file_name = ''.join(('Z',stud[-1],'.jpg'))
     path = os.path.join('photos',stud[-2],file_name)
-    canv.drawImage(path,IMG_X*mm,IMG_Y*mm,width=45*mm,height=45*1.32*mm)
+    canv.drawImage(path,IMG_X*mm,IMG_Y*mm,width=30*mm,height=30*1.32*mm)
     # 绘制条形码
     draw_barcode(canv,stud[0])
     # 绘制水印
@@ -136,6 +136,6 @@ def gen_bak_examid(dir_name):
             gen_pdf(dir_name,exam_addr+exam_date,studs)
 
 if __name__ == '__main__':
-    # gen_pdf('idsd','泗县草沟中学',STUDS)
+    # gen_pdf('idsd','泗县草沟中学',STUDS*8)
     # gen_examid_sch('idsd')
     gen_bak_examid('bakid')

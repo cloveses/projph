@@ -104,6 +104,17 @@ ITEM_SELECT_TYPE = (int,str,str,str,int,int,int,int)
 STUDPH_KS = ('signid','name','sex','idcode','sch','schcode','classcode')
 STUDPH_TYPE = (str,str,str,str,str,str,str)
 
+
+def chg_itemselect_types(data):
+    for i in range(3):
+        data[i] = str(int(data[i]))
+    data[3] = str(data[3])
+    for i in range(4,8):
+        data[i] = int(data[i]) if data[i] else 0
+    data = {k:v for k,v in zip(ITEM_SELECT_KS,datas)}
+    return data
+
+
 db.bind(**DB_PARAMS)
 db.generate_mapping(create_tables=True)
 
