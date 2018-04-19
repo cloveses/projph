@@ -291,7 +291,7 @@ def dump_itemselect_for_sch():
         all_signid = select(s.signid for s in StudPh if s.sch==sch)
         studs = select((s.signid,s.phid,s.name,s.jump_option,
             s.rope_option,s.globe_option,s.bend_option) for s in ItemSelect if s.signid in all_signid)[:]
-        datas = [['序号','中考报名号','准考证号','姓名','立定跳远','跳绳','实心球','体前屈'],]
+        datas = [['中考报名号','准考证号','姓名','立定跳远','跳绳','实心球','体前屈'],]
         datas.extend(studs)
         save_datas_xlsx(sch+'确认表.xlsx',datas)
 
