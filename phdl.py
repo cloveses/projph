@@ -199,6 +199,7 @@ def check_files(directory,start_row=1,grid_end=0):
         raise MyException('目录名错误！')
     files = get_files(directory)
     print('\n','检验的目录：',directory)
+    print('............................')
     if files:
         for file in files:
             infos = []
@@ -206,7 +207,7 @@ def check_files(directory,start_row=1,grid_end=0):
             ws = wb.sheets()[0]
             nrows = ws.nrows
             if ws.ncols != col_num:
-                print('数据列数不符合要求:',file)
+                print('数据列数不符合要求:',file,'\n')
                 continue
             for i in range(start_row,nrows-grid_end):
                 datas = ws.row_values(i)
@@ -214,7 +215,7 @@ def check_files(directory,start_row=1,grid_end=0):
                 if info:
                     infos.append('文件：{}中，第{}行，第{}列数据有误'.format(file,i+1,index+1))
                 if len(infos) >= 3:
-                    print('数据类型错误：',file)
+                    print('数据类型错误：',file,'\n')
                     for info in infos:
                         print(info)
                     break
@@ -224,13 +225,22 @@ def check_files(directory,start_row=1,grid_end=0):
                     info = check_fun(file,ws.row_values(i),i+1)
                     if info:
                         infos.append(info)
+                    keyinfos = ws.row_values(i)[1:4]
+                    keyinfos = (str(int(keyinfos[0])),str(int(keyinfos[1])),keyinfos[2])
+                    if not compare_data(*keyinfos):
+                        print('关键信息检验失败：')
+                        print(file,'第{}行'.format(i+1))
+                        print(ws.row_values(i))
+                        print('*******************************')
             if infos:
                 print()
-                print('检验失败：',file)
+                print('检验失败：',file,'\n')
                 for info in infos:
                     print(info)
             else:
-                print('检验通过：',file)
+                print('检验通过：',file,'\n')
+    print('------------------------')
+
 
 # 获取指定中考报名号学生的所在学校
 @db_session
@@ -319,6 +329,12 @@ def set_freeexam_score():
         else:
             stud.total_score = int(TOTAL_SCORE * 0.6)
 
+# 初始化数据库表
+@db_session
+def init_tab(tab_objs):
+    '''tab_objs 模型列表'''
+    for tab_obj in tab_objs:
+        delete(s for s in tab_obj)
 
 if __name__ == '__main__':
     # print('注意：执行时应将有关字体文件放入当前目录中')
@@ -370,13 +386,21 @@ if __name__ == '__main__':
     #     freeexam
     #     itemselect
     #     ''')
-    # check_files('freeexam')
-    # check_files('itemselect')
+    exe_flag = input('免试表xls文件和选项表xls文件检验(y/n)：')
+    if exe_flag == 'y':
+        check_files('freeexam')
+        check_files('itemselect')
         
     exe_flag = input('免试表xls和选项表xls导入到数据库中并检验(y/n)：')
     if exe_flag == 'y':
+        print('初始化数据库表...')
+        init_tab([FreeExam,ItemSelect])
+        print('...初始化完成！')
+        print('...导入免试表...')
         gath_data('freeexam')
+        print('...导入选项表...')
         gath_data('itemselect')
+        print('...开始检查数据...')
         check_select()
 
 
@@ -385,4 +409,4 @@ if __name__ == '__main__':
 
     # dump_freeexam_studs() #导出全县免试表
     # freexam_type2studph() #从文件 全县免考表.xlsx导入免试类型至总表 
-    set_freeexam_score() #免考学生赋分
+    # set_freeexam_score() #免考学生赋分
