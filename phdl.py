@@ -406,7 +406,7 @@ if __name__ == '__main__':
 
     # # 数据合并到正式表StudPh中
     # put2studph()
-
-    # dump_freeexam_studs() #导出全县免试表
+    dump_itemselect_for_sch()
+    dump_freeexam_studs() #导出全县免试表
     # freexam_type2studph() #从文件 全县免考表.xlsx导入免试类型至总表 
     # set_freeexam_score() #免考学生赋分
