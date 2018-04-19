@@ -319,7 +319,7 @@ def freexam_type2studph(file='全县免考表.xlsx'):
             else:
                 print('无该考生：',int(datas[0]),int(datas[1]),datas[2])
 
-TOTAL_SCORE = 75
+TOTAL_SCORE = 60
 
 @db_session
 def set_freeexam_score():
