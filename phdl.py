@@ -41,7 +41,7 @@ def gath_data(directory,start_row=1,grid_end=0,start_col=0):
     tab_obj     导入的表模型名
     convert_fun 数据转换函数
     """
-    if directory == 'freeexam':
+    if directory in ('freeexam','addfreeexam'):
         tab_obj = FreeExam
         convert_fun = convert_freeexam_data
     elif directory == 'itemselect':
@@ -71,6 +71,17 @@ def gath_data(directory,start_row=1,grid_end=0,start_col=0):
                     # if datas[3] in ['万浩男','孙滔','李灿灿','彭美学']:
                     #     print(datas,file)
                     tab_obj(**datas)
+                    # 如果为后补免试表的，同时修改选项表和学生成绩总表
+                    if directory == 'addfreeexam':
+                        data_sets = dict(
+                            jump_option = 0,
+                            rope_option = 0,
+                            globe_option = 0,
+                            bend_option = 0,
+                            free_flag = True)
+                        for tab_obj in (ItemSelect,StudPh):
+                            stud = select(s for s in tab_obj if s.signid==datas['signid']).first()
+                            stud.set(**data_sets)
             else:
                 print('关键信息有误：')
                 print(file,'第{}行:'.format(i+1),ws.row_values(i))
@@ -187,7 +198,7 @@ def check_free_exam_types(file,datas,row):
 # 只要指定固定的目录名即可：freeexam,itemselect
 
 def check_files(directory,start_row=1,grid_end=0):
-    if directory == 'freeexam':
+    if directory  in ('freeexam','addfreeexam'):
         check_types = check_free_exam_types
         col_num = 7
         check_fun = None
@@ -225,13 +236,16 @@ def check_files(directory,start_row=1,grid_end=0):
                     info = check_fun(file,ws.row_values(i),i+1)
                     if info:
                         infos.append(info)
-                    keyinfos = ws.row_values(i)[1:4]
-                    keyinfos = (str(int(keyinfos[0])),str(int(keyinfos[1])),keyinfos[2])
-                    if not compare_data(*keyinfos):
-                        print('关键信息检验失败：')
-                        print(file,'第{}行'.format(i+1))
-                        print(ws.row_values(i))
-                        print('*******************************')
+
+            # 检验关键信息
+            for i in range(start_row,nrows-grid_end):
+                keyinfos = ws.row_values(i)[1:4]
+                keyinfos = (str(int(keyinfos[0])),str(int(keyinfos[1])),keyinfos[2])
+                if not compare_data(*keyinfos):
+                    print('关键信息检验失败：')
+                    print(file,'第{}行'.format(i+1))
+                    print(ws.row_values(i))
+                    print('*******************************')
             if infos:
                 print()
                 print('检验失败：',file,'\n')
@@ -336,6 +350,18 @@ def init_tab(tab_objs):
     for tab_obj in tab_objs:
         delete(s for s in tab_obj)
 
+#后补免试表检查并导入数据库表
+@db_session
+def add_freeexam():
+    print('...检查免试表文件...')
+    check_files('addfreeexam')
+    if input('无错直接回车则导入至数据库中选项表和总表：') == '':
+        print('...导入免试表...')
+        gath_data('addfreeexam')
+        print('...开始检查数据...')
+        check_select()
+
+
 if __name__ == '__main__':
     # print('注意：执行时应将有关字体文件放入当前目录中')
     # print('''执行前所有数据导入与生成要具备两个条件：
@@ -382,16 +408,19 @@ if __name__ == '__main__':
     #         save_datas_xlsx('各时间段各考点考生人数.xlsx',datas)
 
     # print('''
-    #     要检验的各校上报的免试表和选项表应分别存放于以下子目录中：
+    #     要检验的各校上报的免试表存放子目录中：
     #     freeexam
+    #     选项表应分别存放于子目录中:
     #     itemselect
+    #     导入数据后再补的免试表存放子目录中：
+    #     addfreeexam
     #     ''')
     exe_flag = input('免试表xls文件和选项表xls文件检验(y/n)：')
     if exe_flag == 'y':
         check_files('freeexam')
         check_files('itemselect')
         
-    exe_flag = input('免试表xls和选项表xls导入到数据库中并检验(y/n)：')
+    exe_flag = input('全部免试表xls和选项表xls导入到数据库中并检验(y/n)：')
     if exe_flag == 'y':
         print('初始化数据库表...')
         init_tab([FreeExam,ItemSelect])
@@ -403,10 +432,14 @@ if __name__ == '__main__':
         print('...开始检查数据...')
         check_select()
 
+    exe_flag = input('是否启动添加和导入后补免试考生：(y/n)')
+    if exe_flag == 'y':
+        add_freeexam() #添后补免试考生 （检查文件、改入数据库和修改选项）
 
     # # 数据合并到正式表StudPh中
     # put2studph()
-    dump_itemselect_for_sch()
-    dump_freeexam_studs() #导出全县免试表
+
+    # dump_itemselect_for_sch()
+    # dump_freeexam_studs() #导出全县免试表
     # freexam_type2studph() #从文件 全县免考表.xlsx导入免试类型至总表 
     # set_freeexam_score() #免考学生赋分
