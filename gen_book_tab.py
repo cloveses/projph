@@ -58,7 +58,7 @@ TAB_STY_LST.extend(TAB_STYLE)
 # 生成表格样式
 TAB_STY = TableStyle(TAB_STY_LST)
 # 生成页眉和页脚段落
-TITLE_PARA = Paragraph(("&nbsp;" * 2).join("2018年泗县中考体育考试异常情况登记表"),stylesheet['Title'])
+TITLE_PARA = Paragraph(("&nbsp;" * 2).join("2019年泗县中考体育考试异常情况登记表"),stylesheet['Title'])
 FOOT_PARA = Paragraph(FOOT_TEXT,stylesheet['Normal'])
 
 

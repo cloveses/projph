@@ -4,8 +4,8 @@ import xlrd
 import xlsxwriter
 from ph_models import *
 import random,math,itertools
-from exam_prog_sets import arrange_datas,PREFIX
-from gen_book_tab import gen_book_tbl,count_stud_num
+from exam_prog_sets import arrange_datas,PREFIX,date_seq,sch_seq
+from gen_book_tab import gen_book_tbl,count_stud_num,PAGE_NUM
 
 __author__ = "cloveses"
 
@@ -109,18 +109,18 @@ def arrange_phid():
     for arrange_data in arrange_datas:
         all_studs = []
 
-        # 半日考试中只排某一性别，且依据随机数大小打乱报名顺序
+        # 半日考试中只排某一性别，且依据班级分组（同一班级尽量同组考试）
         if len(arrange_data) == 4:
             for sch in arrange_data[-2]:
                 studs = select(s for s in StudPh if s.sch==sch and
-                    s.sex==arrange_data[-1]).order_by(StudPh.sturand)[:]
+                    s.sex==arrange_data[-1]).order_by(StudPh.classcode)[:]
                 all_studs.extend(studs)
-        # 半日考试中同时排男女生（先女生后男生），且依据随机数大小打乱报名顺序
+        # 半日考试中同时排男女生（先女生后男生），且依据班级分组（同一班级尽量同组考试）
         elif len(arrange_data) == 3:
             for sex in ('女','男'):
                 for sch in arrange_data[-1]:
                     studs = select(s for s in StudPh if s.sch==sch and
-                        s.sex==sex).order_by(StudPh.sturand)[:]
+                        s.sex==sex).order_by(StudPh.classcode)[:]
                     all_studs.extend(studs)
 
         for stud in all_studs:
@@ -163,6 +163,27 @@ def gen_seg_for_sch():
         man_max = str(max(s.phid for s in StudPh if s.sch==sch and s.sex=='男'))
         datas.append([sch,'-'.join((woman_min,woman_max)),'-'.join((man_min,man_max))])
     save_datas_xlsx('各校男女考生号段.xlsx',datas)
+
+# 导出各考点分组－－号段对照表，便于检录查找学生所属组数
+# 随异常情况登记表发放各考点检录处
+@db_session
+def group_phid_arrange():
+    sexes = ('女','男')
+    group_seq = 1
+    for exam_addr in sch_seq:
+        datas = [['考试日期','性别','组数','起始号段','结束号段'],]
+        for dateseq in date_seq:
+            for sex in sexes:
+                studs = select(s for s in StudPh if s.exam_addr==exam_addr and
+                    s.sex==sex and s.exam_date==dateseq).order_by(StudPh.phid)[:]
+                totals = len(studs)
+                unit_group_num = math.ceil(totals/PAGE_NUM)
+                for i in range(unit_group_num):
+                    temp_studs = studs[i * PAGE_NUM:(i+1)*PAGE_NUM]
+                    datas.append([dateseq,sex,group_seq,temp_studs[0].phid,temp_studs[-1].phid])
+                    group_seq += 1
+        save_datas_xlsx(''.join((exam_addr,'分组-号段对照表','.xlsx')),datas)
+
 
 # 检验体育选项是否符合要求
 def check_item_select(file,datas,row_number):
@@ -443,3 +464,6 @@ if __name__ == '__main__':
     # dump_freeexam_studs() #导出全县免试表
     # freexam_type2studph() #从文件 全县免考表.xlsx导入免试类型至总表 
     # set_freeexam_score() #免考学生赋分
+
+    #导出分组－考号对照表
+    group_phid_arrange()
