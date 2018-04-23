@@ -77,11 +77,14 @@ def gath_data(directory,start_row=1,grid_end=0,start_col=0):
                             jump_option = 0,
                             rope_option = 0,
                             globe_option = 0,
-                            bend_option = 0,
-                            free_flag = True)
-                        for tab_obj in (ItemSelect,StudPh):
-                            stud = select(s for s in tab_obj if s.signid==datas['signid']).first()
-                            stud.set(**data_sets)
+                            bend_option = 0)
+                        # 更新选项表
+                        stud = select(s for s in ItemSelect if s.signid==datas['signid']).first()
+                        stud.set(**data_sets)
+                        # 更新体育成绩总表
+                        data_sets['free_flag'] = True
+                        stud = select(s for s in StudPh if s.signid==datas['signid']).first()
+                        stud.set(**data_sets)
             else:
                 print('关键信息有误：')
                 print(file,'第{}行:'.format(i+1),ws.row_values(i))
@@ -339,9 +342,9 @@ def dump_freeexam_studs():
     datas.extend(studs)
     save_datas_xlsx('全县免考表.xlsx',datas)
 
-# 导入免试类型 1 满分
+# 导入免试类型为1的考生 1 满分
 @db_session
-def freexam_type2studph(file='全县免考表.xlsx'):
+def freexam_type2studph(file='全县免考满分表.xlsx'):
     wb = xlrd.open_workbook(file)
     ws = wb.sheets()[0]
     for i in range(ws.nrows):
@@ -353,6 +356,8 @@ def freexam_type2studph(file='全县免考表.xlsx'):
                 stud.freetype = freetype
             else:
                 print('无该考生：',int(datas[0]),int(datas[1]),datas[2])
+        else:
+            print(int(datas[0]),int(datas[1]),datas[2],'数据类型错误')
 
 TOTAL_SCORE = 60
 
@@ -453,17 +458,22 @@ if __name__ == '__main__':
         print('...开始检查数据...')
         check_select()
 
+    exe_flag = input('是否启动数据合并到正式表StudPh中：(y/n)')
+    if exe_flag == 'y':
+        # 数据合并到正式表StudPh中
+        put2studph()
+
     exe_flag = input('是否启动添加和导入后补免试考生：(y/n)')
     if exe_flag == 'y':
-        add_freeexam() #添后补免试考生 （检查文件、改入数据库和修改选项）
-
-    # # 数据合并到正式表StudPh中
-    # put2studph()
+        add_freeexam() # 添后补免试考生 （检查文件、改入数据库和修改选项）
 
     # dump_itemselect_for_sch()
     # dump_freeexam_studs() #导出全县免试表
-    # freexam_type2studph() #从文件 全县免考表.xlsx导入免试类型至总表 
-    # set_freeexam_score() #免考学生赋分
+
+    exe_flag = input('是否启动免试考生赋分 满分表导入（满分和60%分）：(y/n)')
+    if exe_flag == 'y':
+        freexam_type2studph() #从文件 全县免考满分表.xlsx导入免试类型至总表 
+        set_freeexam_score()  #免考学生赋分
 
     #导出分组－考号对照表
-    group_phid_arrange()
+    # group_phid_arrange()
