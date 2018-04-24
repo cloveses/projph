@@ -432,7 +432,8 @@ if __name__ == '__main__':
     #     if exe_flag == 'y':
     #         datas = count_stud_num()
     #         save_datas_xlsx('各时间段各考点考生人数.xlsx',datas)
-
+        # 导出分组－考号对照表
+        # group_phid_arrange()
     # print('''
     #     要检验的各校上报的免试表存放子目录中：
     #     freeexam
@@ -474,6 +475,3 @@ if __name__ == '__main__':
     if exe_flag == 'y':
         freexam_type2studph() #从文件 全县免考满分表.xlsx导入免试类型至总表 
         set_freeexam_score()  #免考学生赋分
-
-    #导出分组－考号对照表
-    # group_phid_arrange()
