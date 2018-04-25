@@ -371,7 +371,7 @@ def score2studph(file='2018体育考试成绩汇总表.xls'):
     wb = xlrd.open_workbook(file)
     ws = wb.sheets()[0]
     infos = []
-    # 检验考试数据错误，缺少项目成绩及分数 ，四项无成绩的
+    # 检验考试数据错误，缺少项目成绩及分数,四项无成绩的,分数计算有误的
     for i in range(1,ws.nrows):
         datas = ws.row_values(i)
         # print(i,datas)
@@ -409,6 +409,15 @@ def score2studph(file='2018体育考试成绩汇总表.xls'):
                 infos.append(info)
             elif ainfo:
                 print(i+1,stud.phid,stud.name,'None of all!')
+            else:
+                jump = int(datas[7]) if datas[7] != '' else int(datas[17])
+                skill = int(datas[9]) if datas[9] != '' else int(datas[19])
+                run = int(datas[11]) if datas[11] != '' else int(datas[13])
+                totals = jump + skill + run
+                if not (15 >= jump >= 0 and 15 >= skill >= 0 and 30 >= run >= 0 and 
+                    totals <= 60 and totals == int(datas[5])): ################
+                    print(i+1,stud.phid,stud.name,'分数有误！')
+                    infos.append([i+1,stud.phid,stud.name,'分数有误！'])
                 
     # 无错误，则导入
     if not infos:
@@ -425,14 +434,14 @@ def score2studph(file='2018体育考试成绩汇总表.xls'):
                 if stud.jump_option:
                     stud.jump = int(datas[6])
                     stud.jump_score = int(datas[7])
-                if stud.rope_option:
+                elif stud.rope_option:
                     stud.jump = int(datas[16])
                     stud.jump_score = int(datas[17])
 
                 if stud.bend_option:
                     stud.skill = int(float(datas[8])*10)
                     stud.skill_score = int(datas[9])
-                if stud.globe_option:
+                elif stud.globe_option:
                     stud.skill = int(float(datas[14])*10)
                     stud.skill_score = int(datas[15])
 
