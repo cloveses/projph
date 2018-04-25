@@ -32,6 +32,7 @@ class SkilLvl(db.Entity):
 class  StudPh(db.Entity):
     signid = Required(str)
     phid = Optional(str,nullable = True)
+    cardid = Optional(str,nullable = True)
     name = Required(str)
     sex = Required(str)
     idcode = Required(str)

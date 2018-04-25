@@ -359,6 +359,94 @@ def freexam_type2studph(file='全县免考满分表.xlsx'):
         else:
             print(int(datas[0]),int(datas[1]),datas[2],'数据类型错误')
 
+# 将跑步时间字符串转换为   秒数*10
+def chg_run_data(data):
+    m,s = data.split(':')
+    ms = int(m) * 60
+    return int((ms + float(s)) * 10)
+
+# 导入公司生成的成绩汇总表
+@db_session
+def score2studph(file='2018体育考试成绩汇总表.xls'):
+    wb = xlrd.open_workbook(file)
+    ws = wb.sheets()[0]
+    infos = []
+    # 检验考试数据错误，缺少项目成绩及分数 ，四项无成绩的
+    for i in range(1,ws.nrows):
+        datas = ws.row_values(i)
+        # print(i,datas)
+        phid = str(int(datas[0]))
+        cardid = str(int(datas[1]))
+        name = datas[2]
+        sex = datas[3]
+        total_score = int(datas[4])
+        stud = select(s for s in StudPh if s.phid==phid).first()
+        if stud and stud.name==name and stud.free_flag == False:
+            ainfo = []
+            if stud.jump_option:
+                if datas[6] == '' or datas[7] == '':
+                    ainfo.append('6,7')
+            if stud.rope_option:
+                if datas[16] == '' or datas[17] == '':
+                    ainfo.append('16,17')
+
+            if stud.bend_option:
+                if datas[8] == '' or datas[9] == '':
+                    ainfo.append('8,9')
+            if stud.globe_option:
+                if datas[14] == '' or datas[15] == '':
+                    ainfo.append('14,15')
+
+            if sex == '女':
+                if datas[10] == '' or datas[11] == '':
+                    ainfo.append('10,11')
+            else:
+                if datas[12] == '' or datas[13] == '':
+                    ainfo.append('12,13')
+            if ainfo and len(ainfo) < 3:
+                info = [i+1,stud.phid,stud.name,]
+                info.extend(ainfo)
+                infos.append(info)
+            elif ainfo:
+                print(i+1,stud.phid,stud.name,'None of all!')
+                
+    # 无错误，则导入
+    if not infos:
+        for i in range(1,ws.nrows):
+            datas = ws.row_values(i)
+            print(i,datas)
+            phid = str(int(datas[0]))
+            cardid = str(int(datas[1]))
+            name = datas[2]
+            sex = datas[3]
+            total_score = int(datas[4])
+            stud = select(s for s in StudPh if s.phid==phid).first()
+            if stud and stud.name==name and stud.free_flag == False:
+                if stud.jump_option:
+                    stud.jump = int(datas[6])
+                    stud.jump_score = int(datas[7])
+                if stud.rope_option:
+                    stud.jump = int(datas[16])
+                    stud.jump_score = int(datas[17])
+
+                if stud.bend_option:
+                    stud.skill = int(float(datas[8])*10)
+                    stud.skill_score = int(datas[9])
+                if stud.globe_option:
+                    stud.skill = int(float(datas[14])*10)
+                    stud.skill_score = int(datas[15])
+
+                if sex == '女':
+                    stud.run = chg_run_data(datas[10])
+                    stud.run_score = int(datas[11])
+                else:
+                    stud.run = chg_run_data(datas[12])
+                    stud.run_score = int(datas[13])
+    else:
+        for info in infos:
+            print(info)
+
+
 TOTAL_SCORE = 60
 
 @db_session
@@ -442,36 +530,38 @@ if __name__ == '__main__':
     #     导入数据后再补的免试表存放子目录中：
     #     addfreeexam
     #     ''')
-    exe_flag = input('免试表xls文件和选项表xls文件检验(y/n)：')
-    if exe_flag == 'y':
-        check_files('freeexam')
-        check_files('itemselect')
+    # exe_flag = input('免试表xls文件和选项表xls文件检验(y/n)：')
+    # if exe_flag == 'y':
+    #     check_files('freeexam')
+    #     check_files('itemselect')
         
-    exe_flag = input('全部免试表xls和选项表xls导入到数据库中并检验(y/n)：')
-    if exe_flag == 'y':
-        print('初始化数据库表...')
-        init_tab([FreeExam,ItemSelect])
-        print('...初始化完成！')
-        print('...导入免试表...')
-        gath_data('freeexam')
-        print('...导入选项表...')
-        gath_data('itemselect')
-        print('...开始检查数据...')
-        check_select()
+    # exe_flag = input('全部免试表xls和选项表xls导入到数据库中并检验(y/n)：')
+    # if exe_flag == 'y':
+    #     print('初始化数据库表...')
+    #     init_tab([FreeExam,ItemSelect])
+    #     print('...初始化完成！')
+    #     print('...导入免试表...')
+    #     gath_data('freeexam')
+    #     print('...导入选项表...')
+    #     gath_data('itemselect')
+    #     print('...开始检查数据...')
+    #     check_select()
 
-    exe_flag = input('是否启动数据合并到正式表StudPh中：(y/n)')
-    if exe_flag == 'y':
-        # 数据合并到正式表StudPh中
-        put2studph()
+    # exe_flag = input('是否启动数据合并到正式表StudPh中：(y/n)')
+    # if exe_flag == 'y':
+    #     # 数据合并到正式表StudPh中
+    #     put2studph()
 
-    exe_flag = input('是否启动添加和导入后补免试考生：(y/n)')
-    if exe_flag == 'y':
-        add_freeexam() # 添后补免试考生 （检查文件、改入数据库和修改选项）
+    # exe_flag = input('是否启动添加和导入后补免试考生：(y/n)')
+    # if exe_flag == 'y':
+    #     add_freeexam() # 添后补免试考生 （检查文件、改入数据库和修改选项）
 
-    # dump_itemselect_for_sch()
-    # dump_freeexam_studs() #导出全县免试表
+    # # dump_itemselect_for_sch()
+    # # dump_freeexam_studs() #导出全县免试表
 
-    exe_flag = input('是否启动免试考生赋分 满分表导入（满分和60%分）：(y/n)')
-    if exe_flag == 'y':
-        freexam_type2studph() #从文件 全县免考满分表.xlsx导入免试类型至总表 
-        set_freeexam_score()  #免考学生赋分
+    # exe_flag = input('是否启动免试考生赋分 满分表导入（满分和60%分）：(y/n)')
+    # if exe_flag == 'y':
+    #     freexam_type2studph() #从文件 全县免考满分表.xlsx导入免试类型至总表 
+    #     set_freeexam_score()  #免考学生赋分
+
+    score2studph('score\\2018体育考试成绩汇总表.xls')
