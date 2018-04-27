@@ -383,95 +383,113 @@ def check_scores(file='2018体育考试成绩汇总表.xls'):
         totals = 0
         stud = select(s for s in StudPh if s.phid==phid).first()
         if not stud.free_flag:
-            if not (datas[6] or datas[16]):
-                info.append('跳远和跳绳同时没有成绩！')
-
-            if datas[6] and datas[16]:
-                info.append('跳远和跳绳不能同时有成绩！')
+            if total_score == 0:
+                info.append('全无成绩，可能为缺考！')
             else:
-                if datas[6] != '':
-                    data = int(datas[6])
-                    score = int(datas[7])
-                    if sex == '女':
-                        look_score = score_jump_woman(data)
-                    else:
-                        look_score = score_jump_man(data)
-                    if score == look_score:
-                        totals += score
-                    else:
-                        info.append('跳远赋分错误')
+                if not (datas[6] or datas[16]):
+                    info.append('跳远和跳绳同时没有成绩！')
 
-                if datas[16] != '':
-                    data = int(datas[16])
-                    score = int(datas[17])
-                    if sex == '女':
-                        look_score = score_rope_woman(data)
-                    else:
-                        look_score = score_rope_man(data)
-                    if score == look_score:
-                        totals += score
-                    else:
-                        info.append('跳绳赋分错误')
+                if datas[6] and datas[16]:
+                    info.append('跳远和跳绳不能同时有成绩！')
+                else:
+                    if datas[6] != '':
+                        data = int(datas[6])
+                        score = int(datas[7])
+                        if sex == '女':
+                            look_score = score_jump_woman(data)
+                        else:
+                            look_score = score_jump_man(data)
+                        if score == look_score:
+                            totals += score
+                        else:
+                            info.append('跳远赋分错误')
 
-            if not (datas[8] or datas[14]):
-                info.append('体前屈和实心球同时没有成绩！')
+                    if datas[16] != '':
+                        data = int(datas[16])
+                        score = int(datas[17])
+                        if sex == '女':
+                            look_score = score_rope_woman(data)
+                        else:
+                            look_score = score_rope_man(data)
+                        if score == look_score:
+                            totals += score
+                        else:
+                            info.append('跳绳赋分错误')
 
-            if datas[8] and datas[14]:
-                info.append('体前屈和实心球不能同时有成绩！')
-            else:
-                if datas[8] != '':
-                    data = int(datas[8]*10)
-                    score = int(datas[9])
-                    if sex == '女':
-                        look_score = score_bend_woman(data)
-                    else:
-                        look_score = score_bend_man(data)
-                    if score == look_score:
-                        totals += score
-                    else:
-                        info.append('体前屈赋分错误')
+                if not (datas[8] or datas[14]):
+                    info.append('体前屈和实心球同时没有成绩！')
 
-                if datas[14] != '':
-                    data = int(datas[14]*100)
-                    score = int(datas[15])
-                    if sex == '女':
-                        look_score = score_globe_woman(data)
-                    else:
-                        look_score = score_globe_man(data)
-                    if score == look_score:
-                        totals += score
-                    else:
-                        info.append('实心球赋分错误')
+                if datas[8] and datas[14]:
+                    info.append('体前屈和实心球不能同时有成绩！')
+                else:
+                    if datas[8] != '':
+                        data = int(float(datas[8])*10)
+                        score = int(datas[9])
+                        if sex == '女':
+                            look_score = score_bend_woman(data)
+                        else:
+                            look_score = score_bend_man(data)
+                        if score == look_score:
+                            totals += score
+                        else:
+                            info.append('体前屈赋分错误')
 
-            if not (datas[8] or datas[14]):
-                info.append('该生无跑步成绩！')
+                    if datas[14] != '':
+                        data = int(float(datas[14])*100)
+                        score = int(datas[15])
+                        if sex == '女':
+                            look_score = score_globe_woman(data)
+                        else:
+                            look_score = score_globe_man(data)
+                        if score == look_score:
+                            totals += score
+                        else:
+                            info.append('实心球赋分错误')
 
-            if datas[10] and datas[12]:
-                info.append('800跑和1000跑不能同时有成绩！')
-            else:
-                if datas[10] != '':
-                    data = int(chg_run_data(datas[10]))
-                    score = int(datas[11])
-                    look_score = score_run_woman(data)
-                    if score == look_score:
-                        totals += score
-                    else:
-                        info.append('800跑赋分错误')
+                if not (datas[10] or datas[12]):
+                    info.append('该生无跑步成绩！')
 
-                if datas[12] != '':
-                    data = int(chg_run_data(datas[12]))
-                    score = int(datas[13])
-                    look_score = score_run_man(data)
-                    if score == look_score:
-                        totals += score
-                    else:
-                        info.append('1000跑赋分错误')
-            if total_score != totals:
-                info.append('总分有误！')
-            if info:
-                addinfo = [phid,name,]
-                addinfo.extend(info)
-                infos.append(addinfo)
+                #计算跑步成绩
+                if isinstance(datas[11],float) or datas[11]:
+                    totals += int(datas[11])
+                if isinstance(datas[13],float) or datas[13]:
+                    totals += int(datas[13])
+
+                if datas[10] and datas[12]:
+                    info.append('800跑和1000跑不能同时有成绩！')
+                else:
+                    if datas[10] != '':
+                        if isinstance(datas[10],str):
+                            if ':' not in datas[10]:
+                                print(i+1,phid,'10数据格式错误！')
+                            else:
+                                data = int(chg_run_data(datas[10]))
+                                score = int(datas[11])
+                                look_score = score_run_woman(data)
+                                if score != look_score:
+                                    info.append('800跑赋分错误{} {}}'.format(datas[10],score))
+                        else:
+                            print(i+1,phid,'10数据格式错误！')
+
+                    if datas[12] != '':
+                        if isinstance(datas[12],str):
+                            if ':' not in datas[12]:
+                                print(i+1,phid,'12数据格式错误！')
+                            else:
+                                data = int(chg_run_data(datas[12]))
+                                score = int(datas[13])
+                                look_score = score_run_man(data)
+                                if score != look_score:
+                                    info.append('1000跑赋分错误{} {}'.format(datas[12],score))
+                        else:
+                            print(i+1,phid,'12数据格式错误！')
+
+                if total_score != totals:
+                    info.append('总分有误！')
+                if info:
+                    addinfo = [phid,name,]
+                    addinfo.extend(info)
+                    infos.append(addinfo)
     if infos:
         for info in infos:
             print(info)
@@ -684,4 +702,4 @@ if __name__ == '__main__':
     #     freexam_type2studph() #从文件 全县免考满分表.xlsx导入免试类型至总表 
     #     set_freeexam_score()  #免考学生赋分
 
-    score2studph('score\\泗县中考成绩汇总(宋传）2.xls')
+    check_scores('score\\泗县中考成绩汇总(宋传）2.xls')
