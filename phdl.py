@@ -365,7 +365,8 @@ def chg_run_data(data):
     ms = int(m) * 60
     return int((ms + float(s)) * 10)
 
-# 检查EXCEL表中的成绩数据
+# 首先手工处理EXCEL表中的错误，之后用以下方法来进行检查
+# 检查EXCEL表中的成绩数据 总分累计是否正确 赋分是否有问题 是否有缺项
 @db_session
 def check_scores(file='2018体育考试成绩汇总表.xls'):
     wb = xlrd.open_workbook(file)
@@ -382,6 +383,9 @@ def check_scores(file='2018体育考试成绩汇总表.xls'):
         total_score = int(datas[4])
         totals = 0
         stud = select(s for s in StudPh if s.phid==phid).first()
+        for i in range(6,18):
+            if isinstance(datas[i],str):
+                datas[i] = datas[i].strip()
         if not stud.free_flag:
             if total_score == 0:
                 info.append('全无成绩，可能为缺考！')
@@ -395,25 +399,23 @@ def check_scores(file='2018体育考试成绩汇总表.xls'):
                     if datas[6] != '':
                         data = int(datas[6])
                         score = int(datas[7])
+                        totals += score
                         if sex == '女':
                             look_score = score_jump_woman(data)
                         else:
                             look_score = score_jump_man(data)
-                        if score == look_score:
-                            totals += score
-                        else:
+                        if score != look_score:
                             info.append('跳远赋分错误')
 
                     if datas[16] != '':
                         data = int(datas[16])
                         score = int(datas[17])
+                        totals += score
                         if sex == '女':
                             look_score = score_rope_woman(data)
                         else:
                             look_score = score_rope_man(data)
-                        if score == look_score:
-                            totals += score
-                        else:
+                        if score != look_score:
                             info.append('跳绳赋分错误')
 
                 if not (datas[8] or datas[14]):
@@ -425,25 +427,23 @@ def check_scores(file='2018体育考试成绩汇总表.xls'):
                     if datas[8] != '':
                         data = int(float(datas[8])*10)
                         score = int(datas[9])
+                        totals += score
                         if sex == '女':
                             look_score = score_bend_woman(data)
                         else:
                             look_score = score_bend_man(data)
-                        if score == look_score:
-                            totals += score
-                        else:
+                        if score != look_score:
                             info.append('体前屈赋分错误')
 
                     if datas[14] != '':
                         data = int(float(datas[14])*100)
                         score = int(datas[15])
+                        totals += score
                         if sex == '女':
                             look_score = score_globe_woman(data)
                         else:
                             look_score = score_globe_man(data)
-                        if score == look_score:
-                            totals += score
-                        else:
+                        if score != look_score:
                             info.append('实心球赋分错误')
 
                 if not (datas[10] or datas[12]):
@@ -467,7 +467,7 @@ def check_scores(file='2018体育考试成绩汇总表.xls'):
                                 score = int(datas[11])
                                 look_score = score_run_woman(data)
                                 if score != look_score:
-                                    info.append('800跑赋分错误{} {}}'.format(datas[10],score))
+                                    info.append('800跑赋分错误{} {}'.format(datas[10],score))
                         else:
                             print(i+1,phid,'10数据格式错误！')
 
@@ -486,10 +486,10 @@ def check_scores(file='2018体育考试成绩汇总表.xls'):
 
                 if total_score != totals:
                     info.append('总分有误！')
-                if info:
-                    addinfo = [phid,name,]
-                    addinfo.extend(info)
-                    infos.append(addinfo)
+            if info:
+                addinfo = [phid,name,]
+                addinfo.extend(info)
+                infos.append(addinfo)
     if infos:
         for info in infos:
             print(info)
