@@ -137,12 +137,12 @@ db.generate_mapping(create_tables=True)
 
 def score_run_man(time):
     with db_session:
-        ret = select(r.score for r in RunLvl if r.run_man >= time).max()
+        ret = select(r.score for r in RunLvl if r.run_man*10 >= time).max()
     return 0 if ret is None  else ret
 
 def score_run_woman(time):
     with db_session:
-        ret = select(r.score for r in RunLvl if r.run_woman >= time).max()
+        ret = select(r.score for r in RunLvl if r.run_woman*10 >= time).max()
     return 0 if ret is None  else ret
 
 def score_globe_man(long):

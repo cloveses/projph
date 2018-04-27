@@ -365,9 +365,9 @@ def chg_run_data(data):
     ms = int(m) * 60
     return int((ms + float(s)) * 10)
 
-# 导入公司生成的成绩汇总表
+# 检查EXCEL表中的成绩数据
 @db_session
-def score2studph(file='2018体育考试成绩汇总表.xls'):
+def check_scores(file='2018体育考试成绩汇总表.xls'):
     wb = xlrd.open_workbook(file)
     ws = wb.sheets()[0]
     infos = []
@@ -376,84 +376,195 @@ def score2studph(file='2018体育考试成绩汇总表.xls'):
         datas = ws.row_values(i)
         # print(i,datas)
         phid = str(int(datas[0]))
-        cardid = str(int(datas[1]))
         name = datas[2]
         sex = datas[3]
+        info = []
         total_score = int(datas[4])
+        totals = 0
         stud = select(s for s in StudPh if s.phid==phid).first()
-        if stud and stud.name==name and stud.free_flag == False:
-            ainfo = []
-            if stud.jump_option:
-                if datas[6] == '' or datas[7] == '':
-                    ainfo.append('6,7')
-            if stud.rope_option:
-                if datas[16] == '' or datas[17] == '':
-                    ainfo.append('16,17')
+        if not stud.free_flag:
+            if not (datas[6] or datas[16]):
+                info.append('跳远和跳绳同时没有成绩！')
 
-            if stud.bend_option:
-                if datas[8] == '' or datas[9] == '':
-                    ainfo.append('8,9')
-            if stud.globe_option:
-                if datas[14] == '' or datas[15] == '':
-                    ainfo.append('14,15')
-
-            if sex == '女':
-                if datas[10] == '' or datas[11] == '':
-                    ainfo.append('10,11')
+            if datas[6] and datas[16]:
+                info.append('跳远和跳绳不能同时有成绩！')
             else:
-                if datas[12] == '' or datas[13] == '':
-                    ainfo.append('12,13')
-            if ainfo and len(ainfo) < 3:
-                info = [i+1,stud.phid,stud.name,]
-                info.extend(ainfo)
-                infos.append(info)
-            elif ainfo:
-                print(i+1,stud.phid,stud.name,'None of all!')
+                if datas[6] != '':
+                    data = int(datas[6])
+                    score = int(datas[7])
+                    if sex == '女':
+                        look_score = score_jump_woman(data)
+                    else:
+                        look_score = score_jump_man(data)
+                    if score == look_score:
+                        totals += score
+                    else:
+                        info.append('跳远赋分错误')
+
+                if datas[16] != '':
+                    data = int(datas[16])
+                    score = int(datas[17])
+                    if sex == '女':
+                        look_score = score_rope_woman(data)
+                    else:
+                        look_score = score_rope_man(data)
+                    if score == look_score:
+                        totals += score
+                    else:
+                        info.append('跳绳赋分错误')
+
+            if not (datas[8] or datas[14]):
+                info.append('体前屈和实心球同时没有成绩！')
+
+            if datas[8] and datas[14]:
+                info.append('体前屈和实心球不能同时有成绩！')
             else:
-                jump = int(datas[7]) if datas[7] != '' else int(datas[17])
-                skill = int(datas[9]) if datas[9] != '' else int(datas[19])
-                run = int(datas[11]) if datas[11] != '' else int(datas[13])
-                totals = jump + skill + run
-                if not (15 >= jump >= 0 and 15 >= skill >= 0 and 30 >= run >= 0 and 
-                    totals <= 60 and totals == int(datas[5])): ################
-                    print(i+1,stud.phid,stud.name,'分数有误！')
-                    infos.append([i+1,stud.phid,stud.name,'分数有误！'])
-                
-    # 无错误，则导入
-    if not infos:
-        for i in range(1,ws.nrows):
-            datas = ws.row_values(i)
-            print(i,datas)
-            phid = str(int(datas[0]))
-            cardid = str(int(datas[1]))
-            name = datas[2]
-            sex = datas[3]
-            total_score = int(datas[4])
-            stud = select(s for s in StudPh if s.phid==phid).first()
-            if stud and stud.name==name and stud.free_flag == False:
-                if stud.jump_option:
-                    stud.jump = int(datas[6])
-                    stud.jump_score = int(datas[7])
-                elif stud.rope_option:
-                    stud.jump = int(datas[16])
-                    stud.jump_score = int(datas[17])
+                if datas[8] != '':
+                    data = int(datas[8]*10)
+                    score = int(datas[9])
+                    if sex == '女':
+                        look_score = score_bend_woman(data)
+                    else:
+                        look_score = score_bend_man(data)
+                    if score == look_score:
+                        totals += score
+                    else:
+                        info.append('体前屈赋分错误')
 
-                if stud.bend_option:
-                    stud.skill = int(float(datas[8])*10)
-                    stud.skill_score = int(datas[9])
-                elif stud.globe_option:
-                    stud.skill = int(float(datas[14])*10)
-                    stud.skill_score = int(datas[15])
+                if datas[14] != '':
+                    data = int(datas[14]*100)
+                    score = int(datas[15])
+                    if sex == '女':
+                        look_score = score_globe_woman(data)
+                    else:
+                        look_score = score_globe_man(data)
+                    if score == look_score:
+                        totals += score
+                    else:
+                        info.append('实心球赋分错误')
 
-                if sex == '女':
-                    stud.run = chg_run_data(datas[10])
-                    stud.run_score = int(datas[11])
-                else:
-                    stud.run = chg_run_data(datas[12])
-                    stud.run_score = int(datas[13])
-    else:
+            if not (datas[8] or datas[14]):
+                info.append('该生无跑步成绩！')
+
+            if datas[10] and datas[12]:
+                info.append('800跑和1000跑不能同时有成绩！')
+            else:
+                if datas[10] != '':
+                    data = int(chg_run_data(datas[10]))
+                    score = int(datas[11])
+                    look_score = score_run_woman(data)
+                    if score == look_score:
+                        totals += score
+                    else:
+                        info.append('800跑赋分错误')
+
+                if datas[12] != '':
+                    data = int(chg_run_data(datas[12]))
+                    score = int(datas[13])
+                    look_score = score_run_man(data)
+                    if score == look_score:
+                        totals += score
+                    else:
+                        info.append('1000跑赋分错误')
+            if total_score != totals:
+                info.append('总分有误！')
+            if info:
+                addinfo = [phid,name,]
+                addinfo.extend(info)
+                infos.append(addinfo)
+    if infos:
         for info in infos:
             print(info)
+
+# # 导入公司生成的成绩汇总表
+# @db_session
+# def score2studph(file='2018体育考试成绩汇总表.xls'):
+#     wb = xlrd.open_workbook(file)
+#     ws = wb.sheets()[0]
+#     infos = []
+#     # 检验考试数据错误，缺少项目成绩及分数,四项无成绩的,分数计算有误的
+#     for i in range(1,ws.nrows):
+#         datas = ws.row_values(i)
+#         # print(i,datas)
+#         phid = str(int(datas[0]))
+#         cardid = str(int(datas[1]))
+#         name = datas[2]
+#         sex = datas[3]
+#         total_score = int(datas[4])
+#         stud = select(s for s in StudPh if s.phid==phid).first()
+#         if stud and stud.name==name and stud.free_flag == False:
+#             ainfo = []
+#             if stud.jump_option:
+#                 if datas[6] == '' or datas[7] == '':
+#                     ainfo.append('6,7')
+#             if stud.rope_option:
+#                 if datas[16] == '' or datas[17] == '':
+#                     ainfo.append('16,17')
+
+#             if stud.bend_option:
+#                 if datas[8] == '' or datas[9] == '':
+#                     ainfo.append('8,9')
+#             if stud.globe_option:
+#                 if datas[14] == '' or datas[15] == '':
+#                     ainfo.append('14,15')
+
+#             if sex == '女':
+#                 if datas[10] == '' or datas[11] == '':
+#                     ainfo.append('10,11')
+#             else:
+#                 if datas[12] == '' or datas[13] == '':
+#                     ainfo.append('12,13')
+#             if ainfo and len(ainfo) < 3:
+#                 info = [i+1,stud.phid,stud.name,]
+#                 info.extend(ainfo)
+#                 infos.append(info)
+#             elif ainfo:
+#                 print(i+1,stud.phid,stud.name,'None of all!')
+#             else:
+#                 jump = int(datas[7]) if datas[7] != '' else int(datas[17])
+#                 skill = int(datas[9]) if datas[9] != '' else int(datas[15])
+#                 run = int(datas[11]) if datas[11] != '' else int(datas[13])
+#                 totals = jump + skill + run
+#                 if not (15 >= jump >= 0 and 15 >= skill >= 0 and 30 >= run >= 0 and 
+#                     totals <= 60 and totals == int(datas[4])): ################
+#                     print(i+1,stud.phid,stud.name,'分数有误！')
+#                     infos.append([i+1,stud.phid,stud.name,'分数有误！'])
+                
+#     无错误，则导入
+#     if not infos:
+#         for i in range(1,ws.nrows):
+#             datas = ws.row_values(i)
+#             print(i,datas)
+#             phid = str(int(datas[0]))
+#             cardid = str(int(datas[1]))
+#             name = datas[2]
+#             sex = datas[3]
+#             total_score = int(datas[4])
+#             stud = select(s for s in StudPh if s.phid==phid).first()
+#             if stud and stud.name==name and stud.free_flag == False:
+#                 if stud.jump_option:
+#                     stud.jump = int(datas[6])
+#                     stud.jump_score = int(datas[7])
+#                 elif stud.rope_option:
+#                     stud.jump = int(datas[16])
+#                     stud.jump_score = int(datas[17])
+
+#                 if stud.bend_option:
+#                     stud.skill = int(float(datas[8])*10)
+#                     stud.skill_score = int(datas[9])
+#                 elif stud.globe_option:
+#                     stud.skill = int(float(datas[14])*10)
+#                     stud.skill_score = int(datas[15])
+
+#                 if sex == '女':
+#                     stud.run = chg_run_data(datas[10])
+#                     stud.run_score = int(datas[11])
+#                 else:
+#                     stud.run = chg_run_data(datas[12])
+#                     stud.run_score = int(datas[13])
+#     else:
+#         for info in infos:
+#             print(info)
 
 
 TOTAL_SCORE = 60
@@ -573,4 +684,4 @@ if __name__ == '__main__':
     #     freexam_type2studph() #从文件 全县免考满分表.xlsx导入免试类型至总表 
     #     set_freeexam_score()  #免考学生赋分
 
-    score2studph('score\\2018体育考试成绩汇总表.xls')
+    score2studph('score\\泗县中考成绩汇总(宋传）2.xls')
