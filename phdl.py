@@ -383,9 +383,9 @@ def check_scores(file='2018体育考试成绩汇总表.xls'):
         total_score = int(datas[4])
         totals = 0
         stud = select(s for s in StudPh if s.phid==phid).first()
-        for i in range(6,18):
-            if isinstance(datas[i],str):
-                datas[i] = datas[i].strip()
+        for j in range(6,18):
+            if isinstance(datas[j],str):
+                datas[j] = datas[j].strip()
         if not stud.free_flag:
             if total_score == 0:
                 info.append('全无成绩，可能为缺考！')
