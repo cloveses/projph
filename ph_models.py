@@ -113,7 +113,7 @@ ITEM_SELECT_TYPE = (int,str,str,str,int,int,int,int)
 
 # 导入所有考生信息的字段名、数据类型
 STUDPH_KS = ('signid','name','sex','idcode','sch','schcode','classcode')
-STUDPH_TYPE = (str,str,str,str,str,str,str)
+# STUDPH_TYPE = (str,str,str,str,str,str,str)
 
 # 导入考生考试 成绩字段名
 SCORE_KS = ('jump_data','jump_score','bend_data','bend_score',

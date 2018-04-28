@@ -31,6 +31,23 @@ def compare_data(signid,phid,name):
         s.phid==phid and s.name==name)):
         return True
 
+@db_session
+def init_studph_data(directory='studph',start_row＝1):
+    files = get_files(directory)
+    for file in files:
+        print('import data from:',file)
+        wb = xlrd.open_workbook(file)
+        ws = wb.sheets()[0]
+        nrows = ws.nrows
+        for i in range(start_row,nrows):
+            datas = ws.row_values(i)
+            datas [str(int(data)) if isinstance(data,float) else data
+                for data in datas]
+            params = {}
+            for k,v in zip(STUDPH_KS,datas):
+                params[k] = v
+            StudPh(**params)
+
 # 将电子表格中数据导入数据库中,同时检验数据重复和关键信息错误
 @db_session
 def gath_data(directory,start_row=1,grid_end=0,start_col=0):
@@ -576,7 +593,7 @@ if __name__ == '__main__':
     #     if exe_flag == 'y':
     #         ensure = input('ensure:')
     #         if ensure == 'y':
-    #             gath_data(StudPh,STUDPH_KS,'studph',0,types=STUDPH_TYPE)
+    #             init_studph_data()
 
     #     exe_flag = input('是否执行添加用于生成考号的随机数(y/n)：')
     #     if exe_flag == 'y':
