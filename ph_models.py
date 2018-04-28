@@ -57,15 +57,24 @@ class  StudPh(db.Entity):
     rope_option = Optional(int,nullable = True)
     globe_option = Optional(int,nullable = True)
     bend_option = Optional(int,nullable = True)
-    # 测试数据
-    run = Optional(int,nullable = True)
-    jump = Optional(int,nullable = True)
-    skill = Optional(int,nullable = True)
-    # 测试成绩
-    run_score = Optional(int,nullable = True)
-    jump_score = Optional(int,nullable = True)
-    skill_score = Optional(int,nullable = True)
+
+    # # 测试数据
+    jump_data = Optional(str,nullable=True)
+    rope_data = Optional(str,nullable=True)
+    globe_data = Optional(str,nullable=True)    # cm
+    bend_data = Optional(str,nullable=True)     # mm
+    run8_data = Optional(str,nullable=True)
+    run10_data = Optional(str,nullable=True)
+    # 测试分数
+    jump_score = Optional(int,nullable=True)
+    rope_score = Optional(int,nullable=True)
+    globe_score = Optional(int,nullable=True)
+    bend_score = Optional(int,nullable=True)
+    run8_score = Optional(int,nullable=True)
+    run10_score = Optional(int,nullable=True)
+
     total_score = Optional(int,nullable = True)
+
     freetype = Optional(int,default=0,nullable = True)
     memo = Optional(str,nullable = True)
 
@@ -106,6 +115,10 @@ ITEM_SELECT_TYPE = (int,str,str,str,int,int,int,int)
 STUDPH_KS = ('signid','name','sex','idcode','sch','schcode','classcode')
 STUDPH_TYPE = (str,str,str,str,str,str,str)
 
+# 导入考生考试 成绩字段名
+SCORE_KS = ('jump_data','jump_score','bend_data','bend_score',
+    'run8_data','run8_score','run10_data','run10_score',
+    'globe_data','globe_score','rope_data','rope_score')
 
 def convert_itemselect_data(data):
     # schseq,signid,phid
