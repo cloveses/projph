@@ -550,6 +550,28 @@ def score2studph(file='2018体育考试成绩汇总表.xls'):
         if stud and stud.name==name:
             stud.set(**params)
 
+# 依据要保存的学生和字段名获取信息
+def get_score_data(studs,keys):
+    datas=[]
+    datas.append(keys)
+    for s in studs:
+        data = [get_attr(s,k) for k in keys]
+        datas.append(data)
+    return datas
+#导出所有学生的体育考试成绩 总体导出和分校导出
+def dump_score():
+    col_name_all = ('signid','name','sch','schcode','total_score')
+    col_name_sch = ('signid','name','sch','schcode','total_score',
+        'jump_score','rope_score','globe_score','bend_score','run8_score','run10_score')
+    studs = select(s for s in StudPh).order_by(StudPh.phid)
+    datas = get_score_data(studs,col_name_all)
+    save_datas_xlsx('全县体育考试分数.xlsx',datas)
+
+    schs = select(s.sch for s in StudPh)
+    for sch in schs:
+        studs = select(s for s in StudPh if s.sch==sch).order_by(StudPh.classcode)
+        datas = get_score_data(studs,col_name_sch)
+        save_datas_xlsx(sch+'体育考试成绩.xlsx',datas)
 
 TOTAL_SCORE = 60
 
@@ -670,4 +692,6 @@ if __name__ == '__main__':
     #对成绩的电子表格文件进行检查
     # check_scores('score\\泗县中考成绩汇总(宋传）2.xls')
     #将正确的成绩从电子表格文件中导入数据库
-    score2studph('score\\泗县中考成绩汇总(宋传）2.xls')
+    # score2studph('score\\泗县中考成绩汇总(宋传）2.xls')
+    #导出学生的体育成绩（全县版和分校版）
+    dump_score()
