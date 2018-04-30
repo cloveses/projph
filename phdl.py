@@ -564,13 +564,16 @@ def dump_score():
     col_name_sch = ('signid','name','sch','schcode','total_score',
         'jump_score','rope_score','globe_score','bend_score','run8_score','run10_score')
     studs = select(s for s in StudPh).order_by(StudPh.phid)
-    datas = get_score_data(studs,col_name_all)
+    datas = [['中考报名号','姓名','学校','学校代码','总分'],]
+    datas.extend(get_score_data(studs,col_name_all))
     save_datas_xlsx('全县体育考试分数.xlsx',datas)
 
     schs = select(s.sch for s in StudPh)
     for sch in schs:
         studs = select(s for s in StudPh if s.sch==sch).order_by(StudPh.classcode)
-        datas = get_score_data(studs,col_name_sch)
+        datas = [['中考报名号','姓名','学校','学校代码','总分',
+            '立定跳远','跳绳','实心球','体前屈','800米跑','1000米跑'],]
+        datas.extend(get_score_data(studs,col_name_sch))
         save_datas_xlsx(sch+'体育考试成绩.xlsx',datas)
 
 TOTAL_SCORE = 60
