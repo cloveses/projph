@@ -1,5 +1,6 @@
 import os
 import hashlib
+import re
 import xlrd
 import xlsxwriter
 from ph_models import *
@@ -32,7 +33,7 @@ def compare_data(signid,phid,name):
         return True
 
 @db_session
-def init_studph_data(directory='studph',start_row＝1):
+def init_studph_data(directory='studph',start_row=1):
     files = get_files(directory)
     for file in files:
         print('import data from:',file)
@@ -41,7 +42,7 @@ def init_studph_data(directory='studph',start_row＝1):
         nrows = ws.nrows
         for i in range(start_row,nrows):
             datas = ws.row_values(i)
-            datas [str(int(data)) if isinstance(data,float) else data
+            datas = [str(int(data)) if isinstance(data,float) else data
                 for data in datas]
             params = {}
             for k,v in zip(STUDPH_KS,datas):
@@ -550,28 +551,39 @@ def score2studph(file='2018体育考试成绩汇总表.xls'):
         if stud and stud.name==name:
             stud.set(**params)
 
+def chg_key(s,k):
+    # 导出成绩时，测试数据中有例外情况（如弃考等成绩为0的），则导出例外情况
+    if k.endswith('score') and not k.startswith('total'):
+        data_k = '_'.join((k.split('_')[0],'data'))
+        v = getattr(s,data_k)
+        if v:
+            if not re.match(r'\d+',v):
+                return data_k
+    return k
+
 # 依据要保存的学生和字段名获取信息
 def get_score_data(studs,keys):
     datas=[]
-    datas.append(keys)
+    # datas.append(keys)
     for s in studs:
-        data = [get_attr(s,k) for k in keys]
+        data = [getattr(s,chg_key(s,k)) for k in keys]
         datas.append(data)
     return datas
 #导出所有学生的体育考试成绩 总体导出和分校导出
+@db_session
 def dump_score():
-    col_name_all = ('signid','name','sch','schcode','total_score')
-    col_name_sch = ('signid','name','sch','schcode','total_score',
+    col_name_all = ('signid','phid','name','sch','schcode','total_score')
+    col_name_sch = ('signid','phid','name','sch','schcode','total_score',
         'jump_score','rope_score','globe_score','bend_score','run8_score','run10_score')
     studs = select(s for s in StudPh).order_by(StudPh.phid)
-    datas = [['中考报名号','姓名','学校','学校代码','总分'],]
+    datas = [['中考报名号','体育考试号','姓名','学校','学校代码','总分'],]
     datas.extend(get_score_data(studs,col_name_all))
     save_datas_xlsx('全县体育考试分数.xlsx',datas)
 
     schs = select(s.sch for s in StudPh)
     for sch in schs:
         studs = select(s for s in StudPh if s.sch==sch).order_by(StudPh.classcode)
-        datas = [['中考报名号','姓名','学校','学校代码','总分',
+        datas = [['中考报名号','体育考试号','姓名','学校','学校代码','总分',
             '立定跳远','跳绳','实心球','体前屈','800米跑','1000米跑'],]
         datas.extend(get_score_data(studs,col_name_sch))
         save_datas_xlsx(sch+'体育考试成绩.xlsx',datas)
