@@ -21,7 +21,7 @@ def mstr(data,mtype,default=None):
         return default
 
     if mtype == 1:
-        return data
+        return data.strip()
     # float 2,cut .0
     if mtype == 2:
         data = str(data)
