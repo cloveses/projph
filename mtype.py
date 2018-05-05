@@ -11,7 +11,8 @@ def TypeExcetion(Exception):
     pass
 
 # 用偏函数的形式来固定非本程序所用的默认返回值
-# functools.mstr(data,mtype,default=None)
+# functools.partial(mstr,default=None)
+# eg:
 # mtype : cell_type(i,j)
 
 def mstr(data,mtype,default=None):
