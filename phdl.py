@@ -573,7 +573,7 @@ def get_score_data(studs,keys):
 @db_session
 def dump_score():
     col_name_all = ('signid','phid','name','sch','schcode','total_score')
-    col_name_sch = ('signid','phid','name','sch','schcode','total_score',
+    col_name_sch = ('signid','phid','name','sch','schcode','classcode','total_score',
         'jump_score','rope_score','globe_score','bend_score','run8_score','run10_score')
     studs = select(s for s in StudPh).order_by(StudPh.phid)
     datas = [['中考报名号','体育考试号','姓名','学校','学校代码','总分'],]
@@ -583,7 +583,7 @@ def dump_score():
     schs = select(s.sch for s in StudPh)
     for sch in schs:
         studs = select(s for s in StudPh if s.sch==sch).order_by(StudPh.classcode)
-        datas = [['中考报名号','体育考试号','姓名','学校','学校代码','总分',
+        datas = [['中考报名号','体育考试号','姓名','学校','学校代码','班级代码','总分',
             '立定跳远','跳绳','实心球','体前屈','800米跑','1000米跑'],]
         datas.extend(get_score_data(studs,col_name_sch))
         save_datas_xlsx(sch+'体育考试成绩.xlsx',datas)
