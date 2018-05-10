@@ -397,6 +397,7 @@ def check_scores(file='2018体育考试成绩汇总表.xls'):
         phid = str(int(datas[0]))
         name = datas[2]
         sex = datas[3]
+        sch = datas[5]
         info = []
         total_score = int(datas[4])
         totals = 0
@@ -505,7 +506,7 @@ def check_scores(file='2018体育考试成绩汇总表.xls'):
                 if total_score != totals:
                     info.append('总分有误！')
             if info:
-                addinfo = [phid,name,]
+                addinfo = [phid,name,sch]
                 addinfo.extend(info)
                 infos.append(addinfo)
     if infos:
