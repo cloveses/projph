@@ -705,8 +705,8 @@ if __name__ == '__main__':
     #     freexam_type2studph() #从文件 全县免考满分表.xlsx导入免试类型至总表 
     #     set_freeexam_score()  #免考学生赋分
     #对成绩的电子表格文件进行检查
-    # check_scores('score\\泗县中考成绩汇总(宋传）2.xls')
+    check_scores('score\\泗县中考成绩汇总(宋传）2.xls')
     #将正确的成绩从电子表格文件中导入数据库
     # score2studph('score\\泗县中考成绩汇总(宋传）2.xls')
     #导出学生的体育成绩（全县版和分校版）
-    dump_score()
+    # dump_score()
