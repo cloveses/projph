@@ -1,20 +1,12 @@
-import os
-import math
 import io
 from docx import Document
 from docx.shared import Pt , Inches
 from docx.oxml.ns import qn
 from pystrich.code128 import Code128Encoder
 
-from ph_models import *
 
 TEST_DATA = ("准考号:  ","姓　名:  ","性　别:  ","考　点:  ","报名点:  ")
 STUD_DATA = ('18251402',"李文娟",'男','泗县一中','01中学')
-
-def confirm_path(path):
-    if not os.path.exists(path):
-        os.makedirs(path)
-
 
 def chg_font(obj,fontname='微软雅黑',size=None):
     ## 设置字体函数
@@ -41,7 +33,7 @@ def init_doc(doc):
     chg_font(doc.styles['Normal'],fontname='宋体')
 
 
-def one_page(doc,studs):
+def one_page(doc):
 
     layout_tab = doc.add_table(rows=4,cols=4)
 
@@ -75,31 +67,13 @@ def one_page(doc,studs):
         f = gen_barcode()
         run.add_picture(f,width=Inches(1.2))
 
-def gen_unit_docx(dir_name,sch_name,studs,page_num=8):
-    confirm_path(dir_name)
-    path = os.path.join(dir_name,sch_name + '.docx')
-    canv = canvas.Canvas(path,pagesize=(ID_SIZE[0]*mm,ID_SIZE[1]*mm))
-    pages = math.ceil(len(studs)/page_num)
 
-    doc = Document()
-    init_doc(doc)
-
-    for i in range(pages):
-        one_page(doc,studs[i*page_num:(i+1)*page_num])
-        doc.add_page_break()
-
-    doc.save(path)
-
-# 按学校生成准考证
-@db_session
-def gen_examid_sch(dir_name):
-    schs = select(s.sch for s in StudPh)
-    for sch in schs:
-        datas = select(s 
-         for s in StudPh if s.sch==sch).order_by(StudPh.classcode,StudPh.phid)
-        datas = [(s.phid,s.name,s.sex,s.exam_addr,s.sch,s.schcode,s.signid) for s in datas]
-        gen_unit_docx(dir_name,sch,datas)
 
 
 if __name__ == '__main__':
-    pass
+    doc = Document()
+    init_doc(doc)
+    for i in range(50):
+        one_page(doc)
+        doc.add_page_break()
+    doc.save('ab.docx')
