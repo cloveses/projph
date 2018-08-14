@@ -15,19 +15,24 @@ def chg_font(obj,fontname='微软雅黑',size=None):
         obj.font.size = size
 
 def gen_barcode(code='123456'):
+    ## 生成二维码
     f = io.BytesIO()
     Code128Encoder(code).save(f)
     return f
 
-def one_page(doc):
+def init_doc(doc):
     ## 设置页边距
+    distance = Inches(0.3)
     sec = doc.sections[0]
-    sec.left_margin=Inches(0.2)
-    sec.right_margin=Inches(0.2)
-    sec.top_margin=Inches(0.2)
-    sec.bottom_margin=Inches(0.2)
+    sec.left_margin = distance
+    sec.right_margin = distance
+    sec.top_margin = distance
+    sec.bottom_margin = distance
     ##设置默认字体
     chg_font(doc.styles['Normal'],fontname='宋体')
+
+
+def one_page(doc):
 
     layout_tab = doc.add_table(rows=4,cols=4)
 
@@ -66,5 +71,8 @@ def one_page(doc):
 
 if __name__ == '__main__':
     doc = Document()
-    one_page(doc)
+    for i in range(50):
+        init_doc(doc)
+        one_page(doc)
+        doc.add_page_break()
     doc.save('ab.docx')
