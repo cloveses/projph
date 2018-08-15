@@ -1,6 +1,7 @@
 import os
 import math
 import io
+from PIL import Image
 from docx import Document
 from docx.shared import Pt , Inches
 from docx.oxml.ns import qn
@@ -12,9 +13,15 @@ TEST_DATA = ("准考号:  ","姓　名:  ","性　别:  ","考　点:  ","报名
 STUD_DATA = ('18251402',"李文娟",'男','泗县一中','01中学')
 
 def confirm_path(path):
+    ## 建立目录
     if not os.path.exists(path):
         os.makedirs(path)
 
+def update_image(path):
+    ## 修复问题照片文件（其它程序可查看和打开，此模块中报错）
+    im = Image.open(path)
+    im.save(path)
+    im.close()
 
 def chg_font(obj,fontname='微软雅黑',size=None):
     ## 设置字体函数
@@ -42,43 +49,54 @@ def init_doc(doc):
 
 
 def one_page(doc,studs):
+    ## 生成一页内容（每页八张准考证）
 
     layout_tab = doc.add_table(rows=4,cols=4)
 
-    for cur_cell in (layout_tab.cell(0,0),layout_tab.cell(0,2),
-            layout_tab.cell(1,0),layout_tab.cell(1,2),
-            layout_tab.cell(2,0),layout_tab.cell(2,2),
-            layout_tab.cell(3,0),layout_tab.cell(3,2),):
+    for index,stud in enumerate(studs):
+        r = index % 4
+        c = (index // 4) * 2
+        cur_cell = layout_tab.cell(r,c)
         ph = cur_cell.paragraphs[0]
 
+        ## 插入考生信息
         htitle = ph.add_run('2018年初中学业水平考试')
         htitle.add_break()
         title = ph.add_run('　准　考　证')
         title.add_break()
         chg_font(title,size=Pt(16))
 
-        for left,right in zip(TEST_DATA,STUD_DATA):
+        for left,right in zip(TEST_DATA,stud[:5]):
             ph.add_run(left)
             run = ph.add_run(right)
             chg_font(run)
             run.bold = True
             run.add_break()
 
-    for cur_cell in (layout_tab.cell(0,1),layout_tab.cell(0,3),
-            layout_tab.cell(1,1),layout_tab.cell(1,3),
-            layout_tab.cell(2,1),layout_tab.cell(2,3),
-            layout_tab.cell(3,1),layout_tab.cell(3,3),):
+        ## 插入考生照片和条码图片
+        cur_cell = layout_tab.cell(r,c+1)
+        file_name = ''.join(('Z',stud[-1],'.jpg'))
+        path = os.path.join('photos',stud[-2],file_name)
         ph = cur_cell.paragraphs[0]
         run = ph.add_run()
-        run.add_picture('aa.jpg',width=Inches(1.2))
+        if os.path.exists(path):
+            try:
+                run.add_picture(path,width=Inches(1.2))
+            except:
+                # print(stud,'Photo file error!')
+                # 如果照片错误，则重写照片文件
+                update_image(path)
+                run.add_picture(path,width=Inches(1.2))
+        else:
+            print(stud,'no photo file!')
         run.add_break()
-        f = gen_barcode()
+        f = gen_barcode(stud[0])
         run.add_picture(f,width=Inches(1.2))
 
 def gen_unit_docx(dir_name,sch_name,studs,page_num=8):
+    ## 生成一个学校或一个分类的准考证
     confirm_path(dir_name)
     path = os.path.join(dir_name,sch_name + '.docx')
-    canv = canvas.Canvas(path,pagesize=(ID_SIZE[0]*mm,ID_SIZE[1]*mm))
     pages = math.ceil(len(studs)/page_num)
 
     doc = Document()
@@ -86,7 +104,8 @@ def gen_unit_docx(dir_name,sch_name,studs,page_num=8):
 
     for i in range(pages):
         one_page(doc,studs[i*page_num:(i+1)*page_num])
-        doc.add_page_break()
+        if i != pages - 1:
+            doc.add_page_break()  #插入分页符
 
     doc.save(path)
 
@@ -94,6 +113,8 @@ def gen_unit_docx(dir_name,sch_name,studs,page_num=8):
 @db_session
 def gen_examid_sch(dir_name):
     schs = select(s.sch for s in StudPh)
+    # print(schs)
+    # schs = ['泗县墩集中学',]
     for sch in schs:
         datas = select(s 
          for s in StudPh if s.sch==sch).order_by(StudPh.classcode,StudPh.phid)
@@ -102,4 +123,4 @@ def gen_examid_sch(dir_name):
 
 
 if __name__ == '__main__':
-    pass
+    gen_examid_sch('idsch')
