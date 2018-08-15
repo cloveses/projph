@@ -9,6 +9,10 @@ from pystrich.code128 import Code128Encoder
 
 from ph_models import *
 
+
+## 生成准考证的WORD版DOCX，速度比生成PDF较快，体积稍小
+## 每页8张准考证
+
 TEST_DATA = ("准考号:  ","姓　名:  ","性　别:  ","考　点:  ","报名点:  ")
 STUD_DATA = ('18251402',"李文娟",'男','泗县一中','01中学')
 
@@ -78,6 +82,7 @@ def one_page(doc,studs):
         file_name = ''.join(('Z',stud[-1],'.jpg'))
         path = os.path.join('photos',stud[-2],file_name)
         ph = cur_cell.paragraphs[0]
+        ph.add_run('　')
         run = ph.add_run()
         if os.path.exists(path):
             try:
@@ -91,7 +96,7 @@ def one_page(doc,studs):
             print(stud,'no photo file!')
         run.add_break()
         f = gen_barcode(stud[0])
-        run.add_picture(f,width=Inches(1.2))
+        run.add_picture(f,width=Inches(1.5))
 
 def gen_unit_docx(dir_name,sch_name,studs,page_num=8):
     ## 生成一个学校或一个分类的准考证
